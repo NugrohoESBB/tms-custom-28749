@@ -14,6 +14,7 @@ import { getCurrentSession, logout } from "../services/auth.service.js";
 import { showConfirm, showToast } from "../utils/notification.util.js";
 import { getSchedulesForAttendance } from "../services/attendance.service.js";
 import { startNotificationService } from "../services/notification.service.js";
+import { clearGradeSettingsCache } from "../services/grades.service.js";
 
 /**
  * NAV_ITEMS
@@ -252,6 +253,8 @@ function _bindLogout() {
       showToast("error", "Gagal keluar. Coba lagi.");
       return;
     }
+
+    clearGradeSettingsCache();
 
     window.location.href = "../../pages/auth/login.html";
   });

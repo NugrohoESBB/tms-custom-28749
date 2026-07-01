@@ -716,7 +716,7 @@
 					return;
 				}
 
-				const students = await fetchStudentsInClass(classId);
+				const students = await getStudentsInClass(classId);
 				const gs = gradeStyle(cls.grade);
 				const homeroom = cls.teachers?.full_name ?? "Belum ditentukan";
 

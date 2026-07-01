@@ -1,10 +1,8 @@
-all file/
 fokus ke fitur/
 config/supabase.config.js
 supabase/edge-function/admin-update-account/
 
 
-.env
 connection-supabase.html
 database.supabase.sql
 resetpolicy_newData.sql

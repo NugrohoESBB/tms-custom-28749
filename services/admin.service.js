@@ -19,15 +19,17 @@ import { getSupabaseClient, getCurrentUserId } from "./supabase.service.js";
 export async function getTeacherData(table, teacherId) {
   const supabase = await getSupabaseClient();
   const TABLES_WITH_SOFT_DELETE = ["assignments"];
-  const TABLES_WITHOUT_TEACHER_ID = ["classes", "subjects", "students", "attendances"];
 
-  let query = supabase.from(table).select("*");
+  // Beberapa tabel butuh join relasi supaya nama kelas/mapel ikut tampil
+  const SELECT_MAP = {
+    schedules: "*, classes ( id, name ), subjects ( id, name )",
+    grades:    "*, students ( id, full_name )",
+  };
 
-  // Tabel yang sudah punya teacher_id terisi → filter per guru
-  // Tabel yang teacher_id-nya masih NULL → tampilkan semua (sementara)
-  if (!TABLES_WITHOUT_TEACHER_ID.includes(table)) {
-    query = query.eq("teacher_id", teacherId);
-  }
+  let query = supabase
+    .from(table)
+    .select(SELECT_MAP[table] ?? "*")
+    .eq("teacher_id", teacherId);
 
   if (TABLES_WITH_SOFT_DELETE.includes(table)) {
     query = query.is("deleted_at", null);
@@ -36,6 +38,36 @@ export async function getTeacherData(table, teacherId) {
   const { data, error } = await query;
   if (error) { console.error(`getTeacherData(${table}) error:`, error.message); return []; }
   return data ?? [];
+}
+
+/**
+ * getTeacherGrades
+ * Ambil semua nilai (assignments + scores) milik satu guru,
+ * dipakai khusus untuk tab "Nilai" di modal admin — karena
+ * strukturnya beda dari tabel lain (assignments → scores).
+ * @param {string} teacherId
+ */
+export async function getTeacherGrades(teacherId) {
+  const supabase = await getSupabaseClient();
+
+  const { data: assignments, error } = await supabase
+    .from("assignments")
+    .select(`
+      id, title, category, max_score, assigned_date,
+      classes ( name ),
+      subjects ( name ),
+      scores ( id, score, students ( full_name ) )
+    `)
+    .eq("teacher_id", teacherId)
+    .is("deleted_at", null)
+    .order("assigned_date", { ascending: false });
+
+  if (error) {
+    console.error("getTeacherGrades error:", error.message);
+    return [];
+  }
+
+  return assignments ?? [];
 }
 
 /**
@@ -48,7 +80,7 @@ export async function getAllDataByTable(table) {
   const supabase = await getSupabaseClient();
   const { data, error } = await supabase
     .from(table)
-    .select("*, teachers(full_name)")
+    .select("*, teachers:teacher_id ( full_name, email )")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 

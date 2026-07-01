@@ -573,7 +573,7 @@
 			import { getCurrentSession } from "../../services/auth.service.js";
 			import { getSupabaseClient } from "../../services/supabase.service.js";
 			import { getAllTeachers, adminUpdateAccount, toggleTeacherActive } from "../../services/account_management.service.js";
-			import { getTeacherData, getAllDataByTable } from "../../services/admin.service.js";
+			import { getTeacherData, getAllDataByTable, getTeacherGrades } from "../../services/admin.service.js";
 			import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
 
 			// ── Auth guard ──
@@ -894,7 +894,9 @@
 
 				// Cache supaya tidak re-fetch tiap klik tab
 				if (!cachedData[tab]) {
-					cachedData[tab] = await getTeacherData(tab, currentTeacherId);
+					cachedData[tab] = tab === "grades"
+						? await getTeacherGrades(currentTeacherId)
+						: await getTeacherData(tab, currentTeacherId);
 				}
 
 				const data = cachedData[tab];
@@ -906,6 +908,15 @@
 
 				content.innerHTML = data.map((item) => renderDataItem(tab, item)).join("");
 			}
+
+			function formatScheduleDate(dateStr) {
+				if (!dateStr) return "—";
+				return new Date(dateStr + "T00:00:00").toLocaleDateString("id-ID", {
+					day: "numeric", month: "short", year: "numeric",
+				});
+			}
+
+			const CATEGORY_LABEL = { tugas: "Tugas", ulangan: "Ulangan Harian", uts: "UTS", uas: "UAS" };
 
 			function renderDataItem(tab, item) {
 				const templates = {
@@ -926,13 +937,22 @@
 					</div>`,
 					schedules: `
 					<div class="data-list-item">
-						<div class="item-title">${item.day ?? "—"} · ${item.start_time?.slice(0, 5) ?? "—"} – ${item.end_time?.slice(0, 5) ?? "—"}</div>
-						<div class="item-sub">Ruang: ${item.room ?? "—"}</div>
+						<div class="item-title">
+							${item.classes?.name ?? "—"} · ${item.subjects?.name ?? "—"}
+						</div>
+						<div class="item-sub">
+							${formatScheduleDate(item.scheduled_date)} · ${item.start_time?.slice(0, 5) ?? "—"} – ${item.end_time?.slice(0, 5) ?? "—"}
+							${item.room ? ` · Ruang: ${item.room}` : ""}
+						</div>
 					</div>`,
 					grades: `
 					<div class="data-list-item">
-						<div class="item-title">Nilai: ${item.score ?? "—"}</div>
-						<div class="item-sub">Tipe: ${item.type ?? "—"} · Semester: ${item.semester ?? "—"}</div>
+						<div class="item-title">${item.title ?? "—"} — ${item.classes?.name ?? "—"} · ${item.subjects?.name ?? "—"}</div>
+						<div class="item-sub">
+							${CATEGORY_LABEL[item.category] ?? item.category} · Maks ${item.max_score ?? 100}
+							· ${(item.scores ?? []).length} siswa sudah dinilai
+							· ${formatScheduleDate(item.assigned_date)}
+						</div>
 					</div>`,
 				};
 				return templates[tab] ?? `<div class="data-list-item">${JSON.stringify(item)}</div>`;

@@ -517,9 +517,10 @@
     createAssignment,
     deleteAssignment,
     getSubjectsByClass,
-    calculateFinalScore,
-    getActiveWeights,
-    getGradeLabel,
+    getGradeSettings,
+    buildActiveWeights,
+    calculateFinalScorePure,
+    getGradeLabelPure,
     getAttendanceScoreByClass,
   } from "../../services/grades.service.js";
   import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
@@ -561,9 +562,13 @@
   window.createAssignment      = createAssignment;
   window.deleteAssignment      = deleteAssignment;
   window.getSubjectsByClass    = getSubjectsByClass;
-  window.calculateFinalScore   = calculateFinalScore;
-  window.getActiveWeights = getActiveWeights;
-  window.getGradeLabel    = getGradeLabel;
+  const gradeSettings = await getGradeSettings();
+  const activeWeights = buildActiveWeights(gradeSettings.weights, gradeSettings.extras);
+
+  window.getActiveWeights = () => activeWeights;
+  window.calculateFinalScore = (scoresByCategory, weightsOverride) =>
+    calculateFinalScorePure(scoresByCategory, weightsOverride ?? activeWeights);
+  window.getGradeLabel = (score) => getGradeLabelPure(score, gradeSettings.gradeScale);
   window.getAttendanceScoreByClass = getAttendanceScoreByClass;
   window.showToast             = showToast;
   window.showError             = showError;

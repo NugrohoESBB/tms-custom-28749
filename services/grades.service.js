@@ -298,61 +298,285 @@ export async function getSubjectsByClass(classId) {
     .filter((s) => s && !seen.has(s.id) && seen.add(s.id));
 }
 
+// /* ============================================================
+//    PATCH: grades.service.js
+//    ============================================================
+//    EDIT fungsi calculateFinalScore — ganti seluruh fungsi lama
+//    dengan versi baru di bawah ini (baca bobot dari localStorage).
+//    ============================================================ */
+
+// /**
+//  * getGradeSettings
+//  * Helper internal: baca bobot & skala grade dari localStorage.
+//  * Fallback ke default kalau belum pernah disimpan.
+//  */
+// const DEFAULT_WEIGHTS = { tugas: 20, ulangan: 30, uts: 20, uas: 30 };
+// const DEFAULT_SCALE   = { A: 85, B: 70, C: 55 };
+// const DEFAULT_EXTRAS  = { kehadiran: { active: false, weight: 10 }, bonus: { active: false, weight: 5 } };
+
+// // Cache in-memory sederhana supaya tidak query berulang di render yang sama
+// let _gradeSettingsCache = null;
+
+// /**
+//  * getGradeSettings
+//  * Ambil bobot & skala grade milik guru yang login dari tabel grade_settings.
+//  * Kalau belum pernah disimpan, kembalikan default (tanpa insert dulu).
+//  */
+// export async function getGradeSettings() {
+//   if (_gradeSettingsCache) return _gradeSettingsCache;
+
+//   const supabase = await getSupabaseClient();
+//   const userId   = await getCurrentUserId();
+//   if (!userId) return { weights: DEFAULT_WEIGHTS, gradeScale: DEFAULT_SCALE, extras: DEFAULT_EXTRAS };
+
+//   const { data, error } = await supabase
+//     .from("grade_settings")
+//     .select("weights, grade_scale, extras")
+//     .eq("teacher_id", userId)
+//     .maybeSingle();
+
+//   if (error) {
+//     console.error("getGradeSettings error:", error.message);
+//   }
+
+//   const result = {
+//     weights:    data?.weights     ?? DEFAULT_WEIGHTS,
+//     gradeScale: data?.grade_scale ?? DEFAULT_SCALE,
+//     extras:     data?.extras      ?? DEFAULT_EXTRAS,
+//   };
+
+//   _gradeSettingsCache = result;
+//   return result;
+// }
+
+// /**
+//  * saveGradeSettings
+//  * Upsert bobot & skala grade milik guru yang login.
+//  * Panggil ini dari halaman settings.html / grades.html saat user simpan.
+//  *
+//  * @param {{ weights?: object, gradeScale?: object, extras?: object }} payload
+//  */
+// export async function saveGradeSettings(payload) {
+//   const supabase = await getSupabaseClient();
+//   const userId   = await getCurrentUserId();
+//   if (!userId) return { success: false, error: "Tidak ada sesi aktif." };
+
+//   const current = await getGradeSettings();
+
+//   const row = {
+//     teacher_id:  userId,
+//     weights:     payload.weights    ?? current.weights,
+//     grade_scale: payload.gradeScale ?? current.gradeScale,
+//     extras:      payload.extras     ?? current.extras,
+//     updated_at:  new Date().toISOString(),
+//   };
+
+//   const { error } = await supabase
+//     .from("grade_settings")
+//     .upsert(row, { onConflict: "teacher_id" });
+
+//   if (error) {
+//     console.error("saveGradeSettings error:", error.message);
+//     return { success: false, error: error.message };
+//   }
+
+//   _gradeSettingsCache = { weights: row.weights, gradeScale: row.grade_scale, extras: row.extras };
+//   return { success: true, error: null };
+// }
+
+// /**
+//  * clearGradeSettingsCache
+//  * Panggil saat logout supaya cache tidak "bocor" ke akun berikutnya
+//  * yang login di tab yang sama.
+//  */
+// export function clearGradeSettingsCache() {
+//   _gradeSettingsCache = null;
+// }
+
+// /**
+//  * getActiveWeights
+//  * Mengembalikan bobot efektif semua komponen (utama + tambahan),
+//  * dengan mempertimbangkan komponen tambahan yang aktif.
+//  * Dipakai di calculateFinalScore dan di weight-bar grades.html.
+//  *
+//  * @returns {Array<{ key, label, weight, color }>}
+//  */
+// export async function getActiveWeights() {
+//   const { weights, extras } = await getGradeSettings();
+
+//   const LABELS = { tugas: "Tugas", ulangan: "Ulangan Harian", uts: "UTS", uas: "UAS" };
+//   const COLORS = { tugas: "#2563eb", ulangan: "#f59e0b", uts: "#7c3aed", uas: "#22c55e" };
+
+//   const result = Object.entries(weights).map(([key, w]) => ({
+//     key,
+//     label:  LABELS[key],
+//     color:  COLORS[key],
+//     weight: w,
+//   }));
+
+//   if (extras.kehadiran?.active) {
+//     result.push({ key: "kehadiran", label: "Kehadiran", color: "#16a34a", weight: extras.kehadiran.weight });
+//   }
+//   if (extras.bonus?.active) {
+//     result.push({ key: "bonus", label: "Bonus", color: "#d97706", weight: extras.bonus.weight });
+//   }
+
+//   return result;
+// }
+
+// /**
+//  * getGradeLabel
+//  * Konversi nilai angka ke huruf (A/B/C/D) berdasarkan skala
+//  * yang tersimpan di localStorage (atau default).
+//  * GANTI fungsi toGrade() lokal di grades.html dengan ini juga.
+//  *
+//  * @param {number|null} score
+//  * @returns {string}
+//  */
+// export async function getGradeLabel(score) {
+//   if (score == null) return "—";
+//   const { gradeScale } = await getGradeSettings();
+//   if (score >= gradeScale.A) return "A";
+//   if (score >= gradeScale.B) return "B";
+//   if (score >= gradeScale.C) return "C";
+//   return "D";
+// }
+
+// /**
+//  * calculateFinalScore  ← GANTI fungsi lama dengan ini
+//  * Menghitung nilai akhir berdasarkan bobot aktif dari localStorage.
+//  * Parameter weights opsional masih diterima untuk backward-compat.
+//  *
+//  * @param {object} scoresByCategory - { tugas: [80,90], ulangan: [75], kehadiran: [88], bonus: [5] }
+//  * @param {object} [weights]        - (opsional) override bobot, kalau tidak diisi pakai localStorage
+//  * @returns {number|null}
+//  */
+// export async function calculateFinalScore(scoresByCategory, weights = null) {
+//   const activeWeights = weights
+//     ? Object.entries(weights).map(([key, weight]) => ({ key, weight }))
+//     : await getActiveWeights();
+
+//   let totalWeight = 0;
+//   let weightedSum = 0;
+
+//   activeWeights.forEach(({ key, weight }) => {
+//     const scores      = scoresByCategory[key] ?? [];
+//     const validScores = scores.filter((s) => s != null && !isNaN(s));
+//     if (validScores.length === 0) return;
+
+//     const avg = validScores.reduce((a, b) => a + b, 0) / validScores.length;
+//     weightedSum += avg * weight;
+//     totalWeight += weight;
+//   });
+
+//   if (totalWeight === 0) return null;
+//   return Math.round((weightedSum / totalWeight) * 10) / 10;
+// }
+
 /* ============================================================
-   PATCH: grades.service.js
-   ============================================================
-   EDIT fungsi calculateFinalScore — ganti seluruh fungsi lama
-   dengan versi baru di bawah ini (baca bobot dari localStorage).
+   GRADE SETTINGS (Supabase — pengganti localStorage)
    ============================================================ */
+
+const DEFAULT_WEIGHTS      = { tugas: 20, ulangan: 30, uts: 20, uas: 30 };
+const DEFAULT_SCALE        = { A: 85, B: 70, C: 55 };
+const DEFAULT_EXTRAS       = { kehadiran: { active: false, weight: 10 }, bonus: { active: false, weight: 5 } };
+const DEFAULT_CLASS_GRADES = ["X", "XI", "XII"];
+
+let _gradeSettingsCache = null;
 
 /**
  * getGradeSettings
- * Helper internal: baca bobot & skala grade dari localStorage.
- * Fallback ke default kalau belum pernah disimpan.
+ * Ambil bobot, skala grade, extras, dan tingkat kelas milik guru
+ * yang login dari tabel grade_settings. Di-cache per sesi halaman.
  */
-function getGradeSettings() {
-  let weights = { tugas: 20, ulangan: 30, uts: 20, uas: 30 };
-  let gradeScale = { A: 85, B: 70, C: 55 };
-  let extras = { kehadiran: { active: false, weight: 10 }, bonus: { active: false, weight: 5 } };
+export async function getGradeSettings() {
+  if (_gradeSettingsCache) return _gradeSettingsCache;
 
-  try {
-    const saved = JSON.parse(localStorage.getItem("tms-grade-weights"));
-    if (saved) weights = saved;
-  } catch (_) {}
+  const supabase = await getSupabaseClient();
+  const userId   = await getCurrentUserId();
 
-  try {
-    const saved = JSON.parse(localStorage.getItem("tms-grade-scale"));
-    if (saved) gradeScale = saved;
-  } catch (_) {}
+  const fallback = {
+    weights: DEFAULT_WEIGHTS, gradeScale: DEFAULT_SCALE,
+    extras: DEFAULT_EXTRAS, classGrades: DEFAULT_CLASS_GRADES,
+  };
+  if (!userId) return fallback;
 
-  try {
-    const saved = JSON.parse(localStorage.getItem("tms-grade-extras"));
-    if (saved) extras = saved;
-  } catch (_) {}
+  const { data, error } = await supabase
+    .from("grade_settings")
+    .select("weights, grade_scale, extras, class_grades")
+    .eq("teacher_id", userId)
+    .maybeSingle();
 
-  return { weights, gradeScale, extras };
+  if (error) console.error("getGradeSettings error:", error.message);
+
+  const result = {
+    weights:     data?.weights      ?? DEFAULT_WEIGHTS,
+    gradeScale:  data?.grade_scale  ?? DEFAULT_SCALE,
+    extras:      data?.extras       ?? DEFAULT_EXTRAS,
+    classGrades: data?.class_grades ?? DEFAULT_CLASS_GRADES,
+  };
+
+  _gradeSettingsCache = result;
+  return result;
 }
 
 /**
- * getActiveWeights
- * Mengembalikan bobot efektif semua komponen (utama + tambahan),
- * dengan mempertimbangkan komponen tambahan yang aktif.
- * Dipakai di calculateFinalScore dan di weight-bar grades.html.
- *
- * @returns {Array<{ key, label, weight, color }>}
+ * saveGradeSettings
+ * Upsert sebagian/semua field pengaturan nilai milik guru yang login.
+ * @param {{ weights?:object, gradeScale?:object, extras?:object, classGrades?:string[] }} payload
  */
-export function getActiveWeights() {
-  const { weights, extras } = getGradeSettings();
+export async function saveGradeSettings(payload) {
+  const supabase = await getSupabaseClient();
+  const userId   = await getCurrentUserId();
+  if (!userId) return { success: false, error: "Tidak ada sesi aktif." };
 
+  const current = await getGradeSettings();
+
+  const row = {
+    teacher_id:   userId,
+    weights:      payload.weights     ?? current.weights,
+    grade_scale:  payload.gradeScale  ?? current.gradeScale,
+    extras:       payload.extras      ?? current.extras,
+    class_grades: payload.classGrades ?? current.classGrades,
+    updated_at:   new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from("grade_settings")
+    .upsert(row, { onConflict: "teacher_id" });
+
+  if (error) {
+    console.error("saveGradeSettings error:", error.message);
+    return { success: false, error: error.message };
+  }
+
+  _gradeSettingsCache = {
+    weights: row.weights, gradeScale: row.grade_scale,
+    extras: row.extras, classGrades: row.class_grades,
+  };
+  return { success: true, error: null };
+}
+
+/**
+ * clearGradeSettingsCache
+ * Panggil saat logout supaya cache tidak "bocor" ke akun berikutnya
+ * yang login di tab browser yang sama.
+ */
+export function clearGradeSettingsCache() {
+  _gradeSettingsCache = null;
+}
+
+/**
+ * buildActiveWeights
+ * Fungsi PURE (tanpa akses DB) — ubah { weights, extras } jadi array
+ * bobot aktif. Dipakai grades.html setelah settings di-fetch sekali.
+ */
+export function buildActiveWeights(weights, extras) {
   const LABELS = { tugas: "Tugas", ulangan: "Ulangan Harian", uts: "UTS", uas: "UAS" };
   const COLORS = { tugas: "#2563eb", ulangan: "#f59e0b", uts: "#7c3aed", uas: "#22c55e" };
 
-  // Pakai bobot langsung — guru bertanggung jawab total = 100
   const result = Object.entries(weights).map(([key, w]) => ({
-    key,
-    label:  LABELS[key],
-    color:  COLORS[key],
-    weight: w,   // ← langsung, tanpa mainScale
+    key, label: LABELS[key], color: COLORS[key], weight: w,
   }));
 
   if (extras.kehadiran?.active) {
@@ -361,42 +585,17 @@ export function getActiveWeights() {
   if (extras.bonus?.active) {
     result.push({ key: "bonus", label: "Bonus", color: "#d97706", weight: extras.bonus.weight });
   }
-
   return result;
 }
 
 /**
- * getGradeLabel
- * Konversi nilai angka ke huruf (A/B/C/D) berdasarkan skala
- * yang tersimpan di localStorage (atau default).
- * GANTI fungsi toGrade() lokal di grades.html dengan ini juga.
- *
- * @param {number|null} score
- * @returns {string}
+ * calculateFinalScorePure
+ * Fungsi PURE — hitung nilai akhir dari activeWeights yang SUDAH di-resolve
+ * (bukan ambil dari DB lagi). Sync, aman dipakai di dalam .map()/.forEach().
+ * @param {object} scoresByCategory
+ * @param {Array<{key,weight}>} activeWeights
  */
-export function getGradeLabel(score) {
-  if (score == null) return "—";
-  const { gradeScale } = getGradeSettings();
-  if (score >= gradeScale.A) return "A";
-  if (score >= gradeScale.B) return "B";
-  if (score >= gradeScale.C) return "C";
-  return "D";
-}
-
-/**
- * calculateFinalScore  ← GANTI fungsi lama dengan ini
- * Menghitung nilai akhir berdasarkan bobot aktif dari localStorage.
- * Parameter weights opsional masih diterima untuk backward-compat.
- *
- * @param {object} scoresByCategory - { tugas: [80,90], ulangan: [75], kehadiran: [88], bonus: [5] }
- * @param {object} [weights]        - (opsional) override bobot, kalau tidak diisi pakai localStorage
- * @returns {number|null}
- */
-export function calculateFinalScore(scoresByCategory, weights = null) {
-  const activeWeights = weights
-    ? Object.entries(weights).map(([key, weight]) => ({ key, weight }))
-    : getActiveWeights();
-
+export function calculateFinalScorePure(scoresByCategory, activeWeights) {
   let totalWeight = 0;
   let weightedSum = 0;
 
@@ -412,6 +611,18 @@ export function calculateFinalScore(scoresByCategory, weights = null) {
 
   if (totalWeight === 0) return null;
   return Math.round((weightedSum / totalWeight) * 10) / 10;
+}
+
+/**
+ * getGradeLabelPure
+ * Fungsi PURE — konversi nilai ke huruf, pakai gradeScale yang sudah di-resolve.
+ */
+export function getGradeLabelPure(score, gradeScale) {
+  if (score == null) return "—";
+  if (score >= gradeScale.A) return "A";
+  if (score >= gradeScale.B) return "B";
+  if (score >= gradeScale.C) return "C";
+  return "D";
 }
 
 /**
