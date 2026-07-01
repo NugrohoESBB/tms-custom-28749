@@ -6,3 +6,5 @@ supabase/edge-function/admin-update-account/
 connection-supabase.html
 database.supabase.sql
 resetpolicy_newData.sql
+perubahanDatabase.sql
+finalDatabase.sql
