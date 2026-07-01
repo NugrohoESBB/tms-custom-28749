@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Profil Saya — TMS</title>
+
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+		<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="../../assets/css/main.css" />
+		<link rel="stylesheet" href="../../assets/css/dashboard.css" />
+
+		<script>
+			(function () {
+				const t = localStorage.getItem("tms-theme") || "light";
+				if (t === "dark") document.documentElement.classList.add("dark");
+			})();
+		</script>
+
+		<style>
+			body {
+				font-family: "Plus Jakarta Sans", sans-serif;
+			}
+
+			.profile-avatar-ring {
+				width: 96px;
+				height: 96px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 2rem;
+				font-weight: 800;
+				color: white;
+				flex-shrink: 0;
+				position: relative;
+				cursor: pointer;
+				overflow: hidden;
+			}
+			.profile-avatar-ring img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				border-radius: 50%;
+			}
+			.avatar-overlay {
+				position: absolute;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.45);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 0;
+				transition: opacity 0.2s ease;
+				border-radius: 50%;
+			}
+			.profile-avatar-ring:hover .avatar-overlay {
+				opacity: 1;
+			}
+
+			.profile-section {
+				background: var(--color-surface);
+				border: 1px solid var(--color-border);
+				border-radius: 1rem;
+				padding: 1.5rem;
+				margin-bottom: 1rem;
+			}
+			.profile-section-title {
+				font-size: 0.875rem;
+				font-weight: 700;
+				color: var(--color-text);
+				margin-bottom: 1.25rem;
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+			.profile-section-title i {
+				color: var(--color-primary);
+			}
+
+			.form-group {
+				margin-bottom: 1rem;
+			}
+			.form-label {
+				display: block;
+				font-size: 0.8rem;
+				font-weight: 600;
+				color: var(--color-text-muted);
+				margin-bottom: 0.35rem;
+			}
+			.form-input,
+			.form-select {
+				width: 100%;
+				padding: 0.6rem 0.85rem;
+				border-radius: 0.55rem;
+				border: 1.5px solid var(--color-border);
+				background: var(--color-surface);
+				color: var(--color-text);
+				font-size: 0.875rem;
+				outline: none;
+				font-family: inherit;
+				transition:
+					border-color 0.15s ease,
+					box-shadow 0.15s ease;
+			}
+			.form-input:focus {
+				border-color: var(--color-primary);
+				box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+			}
+			.form-input:disabled {
+				background: var(--color-bg);
+				cursor: not-allowed;
+				color: var(--color-text-muted);
+			}
+			.form-hint {
+				font-size: 0.75rem;
+				color: var(--color-text-muted);
+				margin-top: 0.3rem;
+			}
+			.form-error {
+				font-size: 0.75rem;
+				color: var(--color-danger);
+				margin-top: 0.3rem;
+				min-height: 1rem;
+			}
+
+			.pw-wrapper {
+				position: relative;
+			}
+			.pw-toggle {
+				position: absolute;
+				right: 0.75rem;
+				top: 50%;
+				transform: translateY(-50%);
+				background: none;
+				border: none;
+				cursor: pointer;
+				color: var(--color-text-muted);
+				display: flex;
+				align-items: center;
+			}
+
+			.btn-primary {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.6rem 1.25rem;
+				border-radius: 0.55rem;
+				background: var(--color-primary);
+				color: white;
+				font-size: 0.875rem;
+				font-weight: 600;
+				border: none;
+				cursor: pointer;
+				transition: opacity 0.15s ease;
+				font-family: inherit;
+			}
+			.btn-primary:hover {
+				opacity: 0.88;
+			}
+			.btn-primary:disabled {
+				opacity: 0.55;
+				cursor: not-allowed;
+			}
+
+			.role-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.3rem;
+				padding: 0.25rem 0.65rem;
+				border-radius: 99px;
+				font-size: 0.75rem;
+				font-weight: 700;
+			}
+			.role-badge.admin {
+				background: rgba(124, 58, 237, 0.12);
+				color: #7c3aed;
+			}
+			.role-badge.teacher {
+				background: rgba(37, 99, 235, 0.1);
+				color: var(--color-primary);
+			}
+
+			.stat-mini {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				padding: 0.75rem 1rem;
+				background: var(--color-bg);
+				border-radius: 0.65rem;
+				border: 1px solid var(--color-border);
+			}
+			.stat-mini-val {
+				font-size: 1.25rem;
+				font-weight: 800;
+				color: var(--color-text);
+			}
+			.stat-mini-lbl {
+				font-size: 0.7rem;
+				color: var(--color-text-muted);
+				font-weight: 600;
+				margin-top: 0.15rem;
+			}
+
+			.strength-bar {
+				height: 4px;
+				border-radius: 2px;
+				margin-top: 0.4rem;
+				transition: all 0.3s;
+			}
+			.strength-weak {
+				background: var(--color-danger);
+				width: 33%;
+			}
+			.strength-medium {
+				background: var(--color-warning);
+				width: 66%;
+			}
+			.strength-strong {
+				background: var(--color-success);
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="dashboard-shell" id="dashboard-shell">
+			<div id="sidebar-root"></div>
+			<div class="dashboard-main">
+				<div id="navbar-root"></div>
+				<main class="dashboard-content">
+					<div class="mb-6">
+						<h2 class="text-xl font-bold">Profil Saya</h2>
+						<p class="text-sm mt-0.5" style="color: var(--color-text-muted)">Kelola informasi akun dan keamanan.</p>
+					</div>
+
+					<!-- Avatar + Info Singkat -->
+					<div class="profile-section">
+						<div class="flex items-center gap-4 flex-wrap">
+							<div class="profile-avatar-ring" id="avatar-btn" title="Klik untuk ganti foto">
+								<span id="avatar-initials">--</span>
+								<div class="avatar-overlay">
+									<i data-lucide="camera" style="width: 1.25rem; height: 1.25rem; color: white"></i>
+								</div>
+							</div>
+							<input type="file" id="photo-input" accept="image/*" style="display: none" />
+							<div>
+								<h3 class="text-lg font-bold" id="profile-name">Memuat...</h3>
+								<p class="text-sm" style="color: var(--color-text-muted)" id="profile-email">—</p>
+								<div class="flex items-center gap-2 mt-1.5 flex-wrap">
+									<span class="role-badge" id="profile-role-badge">—</span>
+									<span class="text-xs" style="color: var(--color-text-muted)" id="profile-joined">—</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- Statistik mini -->
+						<div class="grid grid-cols-3 gap-3 mt-5" id="profile-stats">
+							<div class="stat-mini">
+								<span class="stat-mini-val" id="stat-jadwal">—</span>
+								<span class="stat-mini-lbl">Total Jadwal</span>
+							</div>
+							<div class="stat-mini">
+								<span class="stat-mini-val" id="stat-siswa">—</span>
+								<span class="stat-mini-lbl">Total Siswa</span>
+							</div>
+							<div class="stat-mini">
+								<span class="stat-mini-val" id="stat-absen">—</span>
+								<span class="stat-mini-lbl">Sesi Diabsen</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Edit Info Pribadi -->
+					<div class="profile-section">
+						<div class="profile-section-title">
+							<i data-lucide="user" style="width: 1rem; height: 1rem"></i>
+							Informasi Pribadi
+						</div>
+						<div class="grid grid-cols-1 gap-0 md:grid-cols-2 md:gap-4">
+							<div class="form-group">
+								<label class="form-label">Nama Lengkap <span style="color: var(--color-danger)">*</span></label>
+								<input type="text" id="field-name" class="form-input" placeholder="Nama lengkap" />
+								<p class="form-error" id="err-name"></p>
+							</div>
+							<div class="form-group">
+								<label class="form-label">NIP</label>
+								<input type="text" id="field-nip" class="form-input" placeholder="Nomor Induk Pegawai" />
+							</div>
+							<div class="form-group">
+								<label class="form-label">Email</label>
+								<input type="email" id="field-email" class="form-input" disabled />
+								<p class="form-hint">Email tidak dapat diubah sendiri. Hubungi admin.</p>
+							</div>
+							<div class="form-group">
+								<label class="form-label">Nomor Telepon</label>
+								<input type="tel" id="field-phone" class="form-input" placeholder="08xxxxxxxxxx" />
+							</div>
+						</div>
+						<button class="btn-primary" id="btn-save-info">
+							<i data-lucide="save" style="width: 0.85rem; height: 0.85rem"></i>
+							<span id="btn-save-info-text">Simpan Perubahan</span>
+						</button>
+					</div>
+
+					<!-- Ganti Password -->
+					<div class="profile-section">
+						<div class="profile-section-title">
+							<i data-lucide="lock" style="width: 1rem; height: 1rem"></i>
+							Keamanan & Password
+						</div>
+						<div class="grid grid-cols-1 gap-0 md:grid-cols-2 md:gap-4">
+							<div class="form-group">
+								<label class="form-label">Password Baru</label>
+								<div class="pw-wrapper">
+									<input type="password" id="field-pw-new" class="form-input" style="padding-right: 2.5rem" placeholder="Minimal 8 karakter" />
+									<button type="button" class="pw-toggle" onclick="togglePw('field-pw-new', 'icon-pw-new')">
+										<i data-lucide="eye" id="icon-pw-new" style="width: 0.9rem; height: 0.9rem"></i>
+									</button>
+								</div>
+								<div class="strength-bar" id="strength-bar" style="width: 0"></div>
+								<p class="form-hint" id="strength-label"></p>
+								<p class="form-error" id="err-pw-new"></p>
+							</div>
+							<div class="form-group">
+								<label class="form-label">Konfirmasi Password Baru</label>
+								<div class="pw-wrapper">
+									<input type="password" id="field-pw-confirm" class="form-input" style="padding-right: 2.5rem" placeholder="Ulangi password baru" />
+									<button type="button" class="pw-toggle" onclick="togglePw('field-pw-confirm', 'icon-pw-confirm')">
+										<i data-lucide="eye" id="icon-pw-confirm" style="width: 0.9rem; height: 0.9rem"></i>
+									</button>
+								</div>
+								<p class="form-error" id="err-pw-confirm"></p>
+							</div>
+						</div>
+						<button class="btn-primary" id="btn-save-pw">
+							<i data-lucide="shield-check" style="width: 0.85rem; height: 0.85rem"></i>
+							<span id="btn-save-pw-text">Perbarui Password</span>
+						</button>
+					</div>
+
+					<!-- Preferensi -->
+					<div class="profile-section">
+						<div class="profile-section-title">
+							<i data-lucide="settings-2" style="width: 1rem; height: 1rem"></i>
+							Preferensi
+						</div>
+						<div class="flex items-center justify-between py-2">
+							<div>
+								<p class="text-sm font-semibold">Mode Gelap</p>
+								<p class="text-xs" style="color: var(--color-text-muted)">Aktifkan tampilan gelap untuk kenyamanan mata.</p>
+							</div>
+							<button id="pref-darkmode" onclick="toggleDarkMode()" class="relative inline-flex h-6 w-11 items-center rounded-full border-2 border-transparent transition-colors" style="background: var(--color-border)">
+								<span id="pref-darkmode-knob" class="inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform translate-x-0.5"></span>
+							</button>
+						</div>
+						<div class="flex items-center justify-between py-2" style="border-top: 1px solid var(--color-border)">
+							<div>
+								<p class="text-sm font-semibold">Notifikasi Browser</p>
+								<p class="text-xs" style="color: var(--color-text-muted)">Izinkan notifikasi untuk reminder kelas.</p>
+							</div>
+							<button class="btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.78rem" onclick="requestNotifPermission()" id="btn-notif-perm">Cek Izin</button>
+						</div>
+					</div>
+				</main>
+			</div>
+		</div>
+
+		<script type="module">
+			import { renderSidebar } from "../../components/sidebar.component.js";
+			import { renderNavbar } from "../../components/navbar.component.js";
+			import { getCurrentSession } from "../../services/auth.service.js";
+			import { getSupabaseClient } from "../../services/supabase.service.js";
+			import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
+
+			// ── Auth guard ──
+			const session = await getCurrentSession();
+			if (!session) {
+				window.location.href = "../auth/login.html";
+			}
+
+			const supabase = await getSupabaseClient();
+			const userId = session.user.id;
+
+			// Ambil profil guru
+			const { data: profile } = await supabase.from("teachers").select("*").eq("id", userId).single();
+
+			const isAdmin = profile?.role === "admin";
+
+			await renderSidebar({ userName: profile?.full_name ?? "Guru", userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+			renderNavbar({ pageTitle: "Profil Saya", pageSubtitle: "Informasi akun kamu", userName: profile?.full_name ?? "Guru" });
+
+			// ── Isi UI ──
+			const initials = (profile?.full_name ?? "G")
+				.split(" ")
+				.slice(0, 2)
+				.map((w) => w[0])
+				.join("")
+				.toUpperCase();
+			document.getElementById("avatar-initials").textContent = initials;
+			document.getElementById("profile-name").textContent = profile?.full_name ?? "—";
+			document.getElementById("profile-email").textContent = profile?.email ?? "—";
+			document.getElementById("field-name").value = profile?.full_name ?? "";
+			document.getElementById("field-nip").value = profile?.nip ?? "";
+			document.getElementById("field-email").value = profile?.email ?? "";
+			document.getElementById("field-phone").value = profile?.phone ?? "";
+
+			// Foto profil
+			if (profile?.photo_url) {
+				const img = document.createElement("img");
+				img.src = profile.photo_url;
+				const initEl = document.getElementById("avatar-initials");
+				initEl.parentElement.insertBefore(img, initEl);
+				initEl.style.display = "none";
+			}
+
+			// Role badge
+			const badge = document.getElementById("profile-role-badge");
+			badge.textContent = isAdmin ? "Admin" : "Guru";
+			badge.className = `role-badge ${profile?.role ?? "teacher"}`;
+
+			// Tanggal bergabung
+			if (profile?.created_at) {
+				const d = new Date(profile.created_at);
+				document.getElementById("profile-joined").textContent = "Bergabung " + d.toLocaleDateString("id-ID", { year: "numeric", month: "long" });
+			}
+
+			// Statistik mini
+			const [{ count: jadwalCount }, { count: siswaCount }, { count: absenCount }] = await Promise.all([
+				supabase.from("schedules").select("id", { count: "exact", head: true }).eq("teacher_id", userId),
+				supabase
+					.from("class_students")
+					.select("student_id", { count: "exact", head: true })
+					.in("class_id", (await supabase.from("schedules").select("class_id").eq("teacher_id", userId)).data?.map((s) => s.class_id) ?? []),
+				supabase.from("attendances").select("id", { count: "exact", head: true }).eq("teacher_id", userId),
+			]);
+			document.getElementById("stat-jadwal").textContent = jadwalCount ?? 0;
+			document.getElementById("stat-siswa").textContent = siswaCount ?? 0;
+			document.getElementById("stat-absen").textContent = absenCount ?? 0;
+
+			// Dark mode toggle state
+			_syncDarkModeToggle();
+
+			// ── Upload Foto ──
+			document.getElementById("avatar-btn").addEventListener("click", () => {
+				document.getElementById("photo-input").click();
+			});
+
+			document.getElementById("photo-input").addEventListener("change", async (e) => {
+				const file = e.target.files[0];
+				if (!file) return;
+				if (file.size > 2 * 1024 * 1024) {
+					showError("Ukuran foto maksimal 2 MB.");
+					return;
+				}
+
+				const ext = file.name.split(".").pop();
+				const path = `avatars/${userId}.${ext}`;
+
+				const { error: upErr } = await supabase.storage.from("teacher-photos").upload(path, file, { upsert: true });
+
+				if (upErr) {
+					showError("Gagal upload foto: " + upErr.message);
+					return;
+				}
+
+				const {
+					data: { publicUrl },
+				} = supabase.storage.from("teacher-photos").getPublicUrl(path);
+
+				await supabase.from("teachers").update({ photo_url: publicUrl }).eq("id", userId);
+
+				// Refresh tampilan avatar
+				let img = document.querySelector(".profile-avatar-ring img");
+				if (!img) {
+					img = document.createElement("img");
+					const ring = document.getElementById("avatar-btn");
+					ring.insertBefore(img, ring.firstChild);
+					document.getElementById("avatar-initials").style.display = "none";
+				}
+				img.src = publicUrl + "?t=" + Date.now();
+				showToast("success", "Foto profil diperbarui!");
+			});
+
+			// ── Simpan Info Pribadi ──
+			document.getElementById("btn-save-info").addEventListener("click", async () => {
+				const name = document.getElementById("field-name").value.trim();
+				const nip = document.getElementById("field-nip").value.trim();
+				const phone = document.getElementById("field-phone").value.trim();
+
+				document.getElementById("err-name").textContent = "";
+				if (!name) {
+					document.getElementById("err-name").textContent = "Nama tidak boleh kosong.";
+					return;
+				}
+
+				const btn = document.getElementById("btn-save-info");
+				btn.disabled = true;
+				document.getElementById("btn-save-info-text").textContent = "Menyimpan...";
+
+				const { error } = await supabase
+					.from("teachers")
+					.update({ full_name: name, nip: nip || null, phone: phone || null })
+					.eq("id", userId);
+
+				btn.disabled = false;
+				document.getElementById("btn-save-info-text").textContent = "Simpan Perubahan";
+
+				if (error) {
+					showError("Gagal menyimpan: " + error.message);
+					return;
+				}
+				document.getElementById("profile-name").textContent = name;
+				showToast("success", "Profil berhasil diperbarui!");
+			});
+
+			// ── Ganti Password ──
+			document.getElementById("field-pw-new").addEventListener("input", (e) => {
+				const v = e.target.value;
+				const bar = document.getElementById("strength-bar");
+				const lbl = document.getElementById("strength-label");
+				if (!v) {
+					bar.style.width = "0";
+					lbl.textContent = "";
+					return;
+				}
+				const hasU = /[A-Z]/.test(v),
+					hasN = /[0-9]/.test(v),
+					hasSym = /[^A-Za-z0-9]/.test(v);
+				const score = [v.length >= 8, hasU, hasN, hasSym].filter(Boolean).length;
+				if (score <= 1) {
+					bar.className = "strength-bar strength-weak";
+					lbl.textContent = "Lemah";
+				} else if (score === 2) {
+					bar.className = "strength-bar strength-medium";
+					lbl.textContent = "Sedang";
+				} else {
+					bar.className = "strength-bar strength-strong";
+					lbl.textContent = "Kuat";
+				}
+			});
+
+			document.getElementById("btn-save-pw").addEventListener("click", async () => {
+				const pw1 = document.getElementById("field-pw-new").value;
+				const pw2 = document.getElementById("field-pw-confirm").value;
+				document.getElementById("err-pw-new").textContent = "";
+				document.getElementById("err-pw-confirm").textContent = "";
+
+				if (pw1.length < 8) {
+					document.getElementById("err-pw-new").textContent = "Minimal 8 karakter.";
+					return;
+				}
+				if (pw1 !== pw2) {
+					document.getElementById("err-pw-confirm").textContent = "Password tidak cocok.";
+					return;
+				}
+
+				const btn = document.getElementById("btn-save-pw");
+				btn.disabled = true;
+				document.getElementById("btn-save-pw-text").textContent = "Memperbarui...";
+
+				const { error } = await supabase.auth.updateUser({ password: pw1 });
+				btn.disabled = false;
+				document.getElementById("btn-save-pw-text").textContent = "Perbarui Password";
+
+				if (error) {
+					showError("Gagal ganti password: " + error.message);
+					return;
+				}
+				document.getElementById("field-pw-new").value = "";
+				document.getElementById("field-pw-confirm").value = "";
+				document.getElementById("strength-bar").style.width = "0";
+				showToast("success", "Password berhasil diperbarui!");
+			});
+
+			// ── Expose fungsi ke window (dipanggil dari onclick HTML) ──
+			window.togglePw = function (fieldId, iconId) {
+				const f = document.getElementById(fieldId);
+				const i = document.getElementById(iconId);
+				f.type = f.type === "password" ? "text" : "password";
+				i.setAttribute("data-lucide", f.type === "password" ? "eye" : "eye-off");
+				lucide.createIcons();
+			};
+
+			window.toggleDarkMode = function () {
+				const isDark = document.documentElement.classList.toggle("dark");
+				localStorage.setItem("tms-theme", isDark ? "dark" : "light");
+				_syncDarkModeToggle();
+			};
+
+			window.requestNotifPermission = async function () {
+				if (!("Notification" in window)) {
+					showError("Browser tidak mendukung notifikasi.");
+					return;
+				}
+				const perm = await Notification.requestPermission();
+				const btn = document.getElementById("btn-notif-perm");
+				if (perm === "granted") {
+					btn.textContent = "✅ Diizinkan";
+					showToast("success", "Notifikasi diizinkan!");
+				} else {
+					btn.textContent = "❌ Ditolak";
+					showToast("error", "Notifikasi ditolak oleh browser.");
+				}
+			};
+
+			function _syncDarkModeToggle() {
+				const isDark = document.documentElement.classList.contains("dark");
+				const btn = document.getElementById("pref-darkmode");
+				const knob = document.getElementById("pref-darkmode-knob");
+				btn.style.background = isDark ? "var(--color-primary)" : "var(--color-border)";
+				knob.style.transform = isDark ? "translateX(1.25rem)" : "translateX(0.125rem)";
+			}
+
+			lucide.createIcons();
+		</script>
+	</body>
+</html>

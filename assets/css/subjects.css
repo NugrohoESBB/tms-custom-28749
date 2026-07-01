@@ -1,0 +1,775 @@
+/* ============================================================
+   SUBJECTS CSS
+   ============================================================
+   Style khusus untuk halaman subjects.html.
+   Berisi:
+   1. Stat bar (total mapel, total jadwal, total guru pengampu).
+   2. Toolbar pencarian & tombol tambah.
+   3. Grid kartu mata pelajaran.
+   4. Tabel mata pelajaran (list view).
+   5. View toggle (grid / list).
+   6. Modal tambah/edit mapel.
+   7. Detail drawer (jadwal & kelas yang memakai mapel ini).
+   8. Badge kode mapel.
+   9. Empty state & skeleton.
+   ============================================================ */
+
+/* ── Stat bar ── */
+.subject-stat-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 640px) { .subject-stat-bar { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 380px) { .subject-stat-bar { grid-template-columns: 1fr; } }
+
+.subject-stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.subject-stat-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.subject-stat-info { min-width: 0; }
+
+.subject-stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.subject-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.2rem;
+}
+
+/* ── Toolbar ── */
+.subjects-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.subjects-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.55rem 0.875rem 0.55rem 2.25rem;
+  border-radius: 0.6rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.subjects-search:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.btn-add-subject {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-add-subject:hover { opacity: 0.88; }
+
+/* ── View toggle (Grid / List) ── */
+.view-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  padding: 0.2rem;
+  flex-shrink: 0;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.view-toggle-btn.active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.view-toggle-btn:hover:not(.active) {
+  color: var(--color-text);
+}
+
+/* ── Grid View ── */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.875rem;
+}
+
+@media (max-width: 480px) { .subjects-grid { grid-template-columns: 1fr; } }
+
+/* Kartu mapel */
+.subject-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Garis aksen kiri (warna berputar dari palet) */
+.subject-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+
+.subject-card:hover {
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.09);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+}
+
+.subject-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.subject-card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.subject-card-actions {
+  display: flex;
+  gap: 0.3rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.subject-card:hover .subject-card-actions {
+  opacity: 1;
+}
+
+.subject-card-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subject-card-code {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  margin-bottom: 0.875rem;
+  text-transform: uppercase;
+}
+
+.subject-card-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin-bottom: 0.75rem;
+}
+
+.subject-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.subject-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Warna kartu & aksen bergilir berdasarkan index (diset via JS) */
+.subject-color-0::before  { background: #2563eb; }
+.subject-color-1::before  { background: #7c3aed; }
+.subject-color-2::before  { background: #db2777; }
+.subject-color-3::before  { background: #d97706; }
+.subject-color-4::before  { background: #16a34a; }
+.subject-color-5::before  { background: #0891b2; }
+.subject-color-6::before  { background: #dc2626; }
+.subject-color-7::before  { background: #9333ea; }
+
+.subject-icon-0  { background: rgba(37,99,235,.1);   color: #2563eb; }
+.subject-icon-1  { background: rgba(124,58,237,.1);  color: #7c3aed; }
+.subject-icon-2  { background: rgba(219,39,119,.1);  color: #db2777; }
+.subject-icon-3  { background: rgba(217,119,6,.12);  color: #d97706; }
+.subject-icon-4  { background: rgba(22,163,74,.1);   color: #16a34a; }
+.subject-icon-5  { background: rgba(8,145,178,.1);   color: #0891b2; }
+.subject-icon-6  { background: rgba(220,38,38,.1);   color: #dc2626; }
+.subject-icon-7  { background: rgba(147,51,234,.1);  color: #9333ea; }
+
+/* ── List / Table View ── */
+.subjects-table-wrapper {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.subjects-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 480px;
+}
+
+.subjects-table thead th {
+  background: var(--color-bg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.subjects-table thead th:hover  { color: var(--color-text); }
+.subjects-table thead th.sorted { color: var(--color-primary); }
+
+.subjects-table tbody tr {
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.subjects-table tbody tr:hover { background: var(--color-bg); }
+.subjects-table tbody tr + tr  { border-top: 1px solid var(--color-border); }
+
+.subjects-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+/* Nama mapel dengan ikon warna */
+.subject-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.subject-icon-sm {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.subject-full-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Badge kode mapel (dipakai di tabel & drawer) */
+.code-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+/* ── Tombol aksi per baris (tabel) ── */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.subjects-table tbody tr:hover .row-actions { opacity: 1; }
+
+.btn-row-action {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-row-action:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+.btn-row-action.danger:hover {
+  background: rgba(239, 68, 68, .1);
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, .3);
+}
+
+/* ── Modal Tambah / Edit ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(3px);
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background: var(--color-surface);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.2s ease;
+  overflow: hidden;
+}
+
+.modal-overlay.open .modal-box {
+  transform: translateY(0) scale(1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.modal-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  transition: background-color 0.15s ease;
+}
+
+.modal-close:hover { background: var(--color-bg); }
+
+.modal-body { padding: 1.25rem; }
+
+.modal-footer {
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ── Form di modal ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+@media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } }
+
+.form-group { margin-bottom: 1rem; }
+.form-group:last-child { margin-bottom: 0; }
+
+.form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.4rem;
+}
+
+.form-label .required { color: var(--color-danger); margin-left: 2px; }
+.form-label .optional {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-left: 4px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.6rem 0.875rem;
+  border-radius: 0.55rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-input.is-invalid { border-color: var(--color-danger); }
+
+.form-error {
+  font-size: 0.72rem;
+  color: var(--color-danger);
+  margin-top: 0.25rem;
+  min-height: 1rem;
+}
+
+.form-hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ── Tombol footer modal ── */
+.btn-modal-cancel {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-modal-cancel:hover { background: var(--color-bg); color: var(--color-text); }
+
+.btn-modal-save {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.5rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-modal-save:hover    { opacity: 0.88; }
+.btn-modal-save:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Detail Drawer ── */
+.detail-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 380px;
+  max-width: 90vw;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.12);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+
+.detail-drawer.open { transform: translateX(0); }
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.3);
+  z-index: 85;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.drawer-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.drawer-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  transition: background-color 0.15s ease;
+}
+
+.drawer-close:hover { background: var(--color-bg); }
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.drawer-body::-webkit-scrollbar { width: 4px; }
+.drawer-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
+/* Ikon besar di tengah header drawer */
+.drawer-subject-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+}
+
+.drawer-subject-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.drawer-subject-code {
+  text-align: center;
+  margin-top: 0.4rem;
+}
+
+/* Section di dalam drawer */
+.drawer-section { margin-top: 1.25rem; }
+
+.drawer-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drawer-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0;
+  font-size: 0.8125rem;
+}
+
+.drawer-info-label { color: var(--color-text-muted); }
+.drawer-info-value { font-weight: 600; color: var(--color-text); text-align: right; }
+
+/* Daftar kelas yang menggunakan mapel ini */
+.drawer-class-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.drawer-class-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.55rem;
+  font-size: 0.8125rem;
+}
+
+.drawer-class-item-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.drawer-class-item-teacher {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Empty state ── */
+.subjects-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 4rem 1rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.subjects-empty svg { opacity: 0.3; }
+.subjects-empty p   { font-size: 0.875rem; max-width: 20rem; }
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-bg) 50%,
+    var(--color-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 0.4rem;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text { height: 0.875rem; }
+.skeleton-sub  { height: 0.7rem; margin-top: 0.3rem; }

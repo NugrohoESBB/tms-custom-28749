@@ -1,0 +1,134 @@
+/* ============================================================
+   AUTH PAGES CSS
+   ============================================================
+   Dipakai bersama oleh login.html, register.html, dan
+   forgot-password.html. Berisi:
+   1. Layout split-screen (panel brand kiri, form kanan).
+   2. Signature element: "schedule grid" — pola titik-titik yang
+      bergerak halus, merepresentasikan jadwal/kalender guru.
+   3. Style input & error state untuk realtime validation.
+   ============================================================ */
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .auth-shell {
+    grid-template-columns: 1.1fr 1fr;
+  }
+}
+
+/* ---------- Panel Kiri (Brand) ---------- */
+.auth-brand-panel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #1e3a8a 100%);
+  color: #f8fafc;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .auth-brand-panel {
+    display: flex;
+  }
+}
+
+/* Signature element: grid titik yang merepresentasikan "jadwal".
+   Setiap titik berdenyut perlahan dengan delay berbeda, memberi
+   kesan kalender yang "hidup" tanpa terasa ramai. */
+.schedule-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  gap: 14px;
+  padding: 40px;
+  opacity: 0.35;
+}
+
+.schedule-grid span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  align-self: center;
+  justify-self: center;
+  animation: dotPulse 4s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.6); }
+}
+
+/* ---------- Form Input ---------- */
+.auth-input-group {
+  position: relative;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.65rem;
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.auth-input.is-invalid {
+  border-color: var(--color-danger);
+}
+
+.auth-input.is-valid {
+  border-color: var(--color-success);
+}
+
+.auth-error-text {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  margin-top: 0.25rem;
+  min-height: 1rem;
+}
+
+/* Toggle show/hide password */
+.auth-toggle-password {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+/* Button loading state: spinner muncul, teks asli disembunyikan */
+.btn-loading .btn-text { visibility: hidden; }
+.btn-loading .btn-spinner { display: inline-block !important; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-spinner {
+  display: none;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}

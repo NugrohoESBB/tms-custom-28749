@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dasbor — Teacher Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-bg) 50%,
+        var(--color-border) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 0.4rem;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-text { height: 1.5rem; width: 3rem; }
+    .skeleton-sub  { height: 0.75rem; width: 5rem; margin-top: 0.25rem; }
+    .skeleton-row  { height: 3.5rem; width: 100%; margin-bottom: 0.75rem; border-radius: 0.5rem; }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 2.5rem 1rem;
+      color: var(--color-text-muted);
+      text-align: center;
+    }
+
+    .empty-state svg { opacity: 0.35; }
+    .empty-state p   { font-size: 0.875rem; }
+  </style>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem("tms-theme") || "light";
+      if (t === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+</head>
+<body>
+
+<div class="dashboard-shell" id="dashboard-shell">
+
+  <div id="sidebar-root"></div>
+
+  <div class="dashboard-main">
+    <div id="navbar-root"></div>
+
+    <main class="dashboard-content">
+
+      <div class="mb-6">
+        <h2 class="text-xl font-bold" id="greeting-text">Memuat...</h2>
+        <p class="text-sm mt-0.5" style="color: var(--color-text-muted)">
+          Ini ringkasan aktivitas hari ini.
+        </p>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="grid grid-cols-2 gap-4 mb-6 lg:grid-cols-4">
+
+        <div class="card-soft p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted)">Siswa Hadir</span>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(34,197,94,.12)">
+              <i data-lucide="user-check" style="width:.875rem;height:.875rem;color:var(--color-success)"></i>
+            </div>
+          </div>
+          <div id="stat-present">
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-sub"></div>
+          </div>
+        </div>
+
+        <div class="card-soft p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted)">Kelas Hari Ini</span>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(37,99,235,.1)">
+              <i data-lucide="calendar-days" style="width:.875rem;height:.875rem;color:var(--color-primary)"></i>
+            </div>
+          </div>
+          <div id="stat-sessions">
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-sub"></div>
+          </div>
+        </div>
+
+        <div class="card-soft p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted)">Tugas Belum Dinilai</span>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(245,158,11,.12)">
+              <i data-lucide="clipboard-list" style="width:.875rem;height:.875rem;color:var(--color-warning)"></i>
+            </div>
+          </div>
+          <div id="stat-ungraded">
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-sub"></div>
+          </div>
+        </div>
+
+        <div class="card-soft p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wide" style="color:var(--color-text-muted)">Rata-rata Nilai</span>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(124,58,237,.1)">
+              <i data-lucide="trending-up" style="width:.875rem;height:.875rem;color:#7c3aed"></i>
+            </div>
+          </div>
+          <div id="stat-avg-score">
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-sub"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- JADWAL HARI INI -->
+      <div class="card-soft p-5 mb-4">
+        <h3 class="text-sm font-semibold mb-4">Jadwal Mengajar Hari Ini</h3>
+        <div id="schedule-list">
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row" style="width:70%"></div>
+        </div>
+      </div>
+
+      <p class="text-xs text-center pb-2" style="color:var(--color-text-muted)">
+        <a href="https://nubara.netlify.app/" target="_blank">TMS v1.0.0 &copy; Nugroho Eko S Batubara 2020 - <span id="year"></span>. All Rights Reserved.</a>
+      </p>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  // Initialize Year's
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+
+<script type="module">
+  import { renderSidebar }     from "../../components/sidebar.component.js";
+  import { renderNavbar }      from "../../components/navbar.component.js";
+  import { getCurrentSession } from "../../services/auth.service.js";
+  import { getDashboardStats, getTodaySchedules } from "../../services/dashboard.service.js";
+  import { getSupabaseClient } from "../../services/supabase.service.js";
+
+  // Guard
+  const session = await getCurrentSession();
+  if (!session) {
+    window.location.href = "../auth/login.html";
+  }
+
+  const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+  // Cek role dari public.teachers
+  const supabaseForRole = await getSupabaseClient();
+  const { data: myProfile } = await supabaseForRole
+    .from("teachers")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+  const isAdmin = myProfile?.role === "admin";
+
+  await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+  renderNavbar({
+    pageTitle:    "Dasbor",
+    pageSubtitle: "Ringkasan aktivitas hari ini",
+    userName,
+  });
+
+  // Greeting dinamis
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 11 ? "Selamat pagi" :
+    hour < 15 ? "Selamat siang" :
+    hour < 18 ? "Selamat sore" : "Selamat malam";
+
+  document.getElementById("greeting-text").textContent =
+    `${greeting}, ${userName.split(" ")[0]}`;
+
+  // Fetch parallel
+  const [stats, schedules] = await Promise.all([
+    getDashboardStats(),
+    getTodaySchedules(),
+  ]);
+
+  renderStats(stats);
+  renderSchedules(schedules);
+
+  function renderStats(s) {
+    const val = (v) => (v != null ? v : "—");
+
+    document.getElementById("stat-present").innerHTML = `
+      <p class="text-2xl font-extrabold">${val(s?.students_present_today)}</p>
+      <p class="text-xs mt-0.5" style="color:var(--color-text-muted)">
+        dari ${val(s?.total_students)} siswa terdaftar
+      </p>
+    `;
+
+    document.getElementById("stat-sessions").innerHTML = `
+      <p class="text-2xl font-extrabold">${val(s?.sessions_today)}</p>
+      <p class="text-xs mt-0.5" style="color:var(--color-text-muted)">sesi mengajar</p>
+    `;
+
+    document.getElementById("stat-ungraded").innerHTML = `
+      <p class="text-2xl font-extrabold"
+         style="color:${s?.ungraded_tasks > 0 ? 'var(--color-warning)' : 'inherit'}">
+        ${val(s?.ungraded_tasks)}
+      </p>
+      <p class="text-xs mt-0.5" style="color:var(--color-text-muted)">menunggu penilaian</p>
+    `;
+
+    document.getElementById("stat-avg-score").innerHTML = `
+      <p class="text-2xl font-extrabold">${val(s?.avg_score)}</p>
+      <p class="text-xs mt-0.5" style="color:var(--color-text-muted)">rata-rata semua nilai</p>
+    `;
+  }
+
+  function renderSchedules(list) {
+    const container = document.getElementById("schedule-list");
+
+    if (!list || list.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <i data-lucide="calendar-x" style="width:2rem;height:2rem"></i>
+          <p>Tidak ada jadwal mengajar hari ini.</p>
+        </div>
+      `;
+      lucide.createIcons();
+      return;
+    }
+
+    const now = new Date();
+
+    container.innerHTML = list.map((item) => {
+      const [startH, startM] = item.start_time.split(":").map(Number);
+      const [endH,   endM]   = item.end_time.split(":").map(Number);
+      const startMin = startH * 60 + startM;
+      const endMin   = endH   * 60 + endM;
+      const nowMin   = now.getHours() * 60 + now.getMinutes();
+
+      let badge, badgeStyle;
+      if (nowMin >= endMin) {
+        badge      = "Selesai";
+        badgeStyle = "background:rgba(34,197,94,.12);color:var(--color-success)";
+      } else if (nowMin >= startMin) {
+        badge      = "Berlangsung";
+        badgeStyle = "background:rgba(37,99,235,.1);color:var(--color-primary)";
+      } else {
+        badge      = "Mendatang";
+        badgeStyle = "background:var(--color-bg);color:var(--color-text-muted);border:1px solid var(--color-border)";
+      }
+
+      const fmt = (t) => t.slice(0, 5).replace(":", ".");
+
+      return `
+        <div class="flex items-center gap-3 p-3 rounded-lg mb-2" style="background:var(--color-bg)">
+          <div class="text-xs font-semibold text-center w-14 flex-shrink-0" style="color:var(--color-primary)">
+            ${fmt(item.start_time)}<br>
+            <span style="color:var(--color-text-muted)">${fmt(item.end_time)}</span>
+          </div>
+          <div class="w-px h-8 flex-shrink-0" style="background:var(--color-border)"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold truncate">${item.subjects?.name ?? "—"}</p>
+            <p class="text-xs" style="color:var(--color-text-muted)">
+              ${item.classes?.name ?? "—"}${item.room ? " · " + item.room : ""}
+            </p>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+                style="${badgeStyle}">${badge}</span>
+        </div>
+      `;
+    }).join("");
+  }
+</script>
+
+</body>
+</html>

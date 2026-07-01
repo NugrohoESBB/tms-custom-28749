@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Manajemen Akun — Teacher Management System</title>
+
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+		<link rel="stylesheet" href="../../assets/css/main.css" />
+		<link rel="stylesheet" href="../../assets/css/dashboard.css" />
+
+		<style>
+			body {
+				font-family: "Plus Jakarta Sans", sans-serif;
+			}
+
+			.skeleton {
+				background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg) 50%, var(--color-border) 75%);
+				background-size: 200% 100%;
+				animation: shimmer 1.4s infinite;
+				border-radius: 0.4rem;
+			}
+			@keyframes shimmer {
+				0% {
+					background-position: 200% 0;
+				}
+				100% {
+					background-position: -200% 0;
+				}
+			}
+
+			/* ── Tabel akun ── */
+			.accounts-table-wrapper {
+				border: 1px solid var(--color-border);
+				border-radius: 0.75rem;
+				overflow: hidden;
+				overflow-x: auto;
+			}
+			.accounts-table {
+				width: 100%;
+				border-collapse: collapse;
+				min-width: 580px;
+			}
+			.accounts-table thead th {
+				background: var(--color-bg);
+				font-size: 0.7rem;
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--color-text-muted);
+				padding: 0.6rem 1rem;
+				text-align: left;
+				border-bottom: 1px solid var(--color-border);
+				white-space: nowrap;
+			}
+			.accounts-table tbody tr {
+				background: var(--color-surface);
+				transition: background-color 0.1s;
+			}
+			.accounts-table tbody tr:hover {
+				background: var(--color-bg);
+			}
+			.accounts-table tbody tr + tr {
+				border-top: 1px solid var(--color-border);
+			}
+			.accounts-table td {
+				padding: 0.7rem 1rem;
+				font-size: 0.8375rem;
+				vertical-align: middle;
+			}
+
+			/* Role badge */
+			.role-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.3rem;
+				padding: 0.2rem 0.6rem;
+				border-radius: 99px;
+				font-size: 0.7rem;
+				font-weight: 700;
+			}
+			.role-badge.admin {
+				background: rgba(37, 99, 235, 0.1);
+				color: var(--color-primary);
+			}
+			.role-badge.teacher {
+				background: rgba(100, 116, 139, 0.1);
+				color: var(--color-text-muted);
+			}
+
+			/* Status badge */
+			.status-dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				display: inline-block;
+				margin-right: 0.3rem;
+			}
+			.status-dot.active {
+				background: var(--color-success);
+			}
+			.status-dot.inactive {
+				background: var(--color-danger);
+			}
+
+			/* Action buttons */
+			.btn-row-action {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.9rem;
+				height: 1.9rem;
+				border-radius: 0.4rem;
+				border: 1px solid var(--color-border);
+				background: var(--color-surface);
+				color: var(--color-text-muted);
+				cursor: pointer;
+				transition: all 0.15s;
+			}
+			.btn-row-action:hover {
+				background: var(--color-bg);
+				color: var(--color-text);
+			}
+			.btn-row-action.danger:hover {
+				background: rgba(239, 68, 68, 0.1);
+				color: var(--color-danger);
+				border-color: rgba(239, 68, 68, 0.3);
+			}
+
+			/* Modal */
+			.modal-overlay {
+				position: fixed;
+				inset: 0;
+				background: rgba(15, 23, 42, 0.45);
+				display: none;
+				align-items: center;
+				justify-content: center;
+				z-index: 100;
+			}
+			.modal-overlay.open {
+				display: flex;
+			}
+			.modal-box {
+				background: var(--color-surface);
+				border: 1px solid var(--color-border);
+				border-radius: 1rem;
+				width: 100%;
+				max-width: 420px;
+				margin: 1rem;
+				box-shadow: 0 16px 48px rgba(15, 23, 42, 0.16);
+			}
+			.modal-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 1.1rem 1.25rem 0;
+			}
+			.modal-title {
+				font-size: 0.9375rem;
+				font-weight: 700;
+			}
+			.modal-close {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 1.75rem;
+				height: 1.75rem;
+				border-radius: 0.4rem;
+				border: none;
+				background: none;
+				cursor: pointer;
+				color: var(--color-text-muted);
+			}
+			.modal-close:hover {
+				background: var(--color-bg);
+			}
+			.modal-body {
+				padding: 1.25rem;
+				display: flex;
+				flex-direction: column;
+				gap: 0.9rem;
+			}
+			.modal-footer {
+				display: flex;
+				justify-content: flex-end;
+				gap: 0.5rem;
+				padding: 0.875rem 1.25rem;
+				border-top: 1px solid var(--color-border);
+			}
+			.form-group {
+				display: flex;
+				flex-direction: column;
+				gap: 0.35rem;
+			}
+			.form-label {
+				font-size: 0.8125rem;
+				font-weight: 600;
+				color: var(--color-text);
+			}
+			.form-label .required {
+				color: var(--color-danger);
+				margin-left: 0.15rem;
+			}
+			.form-input,
+			.form-select {
+				padding: 0.55rem 0.75rem;
+				border-radius: 0.55rem;
+				border: 1.5px solid var(--color-border);
+				background: var(--color-bg);
+				color: var(--color-text);
+				font-size: 0.875rem;
+				font-family: inherit;
+				outline: none;
+				transition: border-color 0.15s;
+			}
+			.form-input:focus,
+			.form-select:focus {
+				border-color: var(--color-primary);
+			}
+			.form-input.is-invalid {
+				border-color: var(--color-danger);
+			}
+			.form-error {
+				font-size: 0.75rem;
+				color: var(--color-danger);
+				min-height: 1rem;
+			}
+			.form-hint {
+				font-size: 0.75rem;
+				color: var(--color-text-muted);
+				line-height: 1.45;
+			}
+
+			.btn-modal-cancel {
+				padding: 0.5rem 1rem;
+				border-radius: 0.5rem;
+				border: 1.5px solid var(--color-border);
+				background: transparent;
+				color: var(--color-text-muted);
+				font-size: 0.8125rem;
+				font-weight: 600;
+				cursor: pointer;
+				font-family: inherit;
+				transition: all 0.15s;
+			}
+			.btn-modal-cancel:hover {
+				background: var(--color-bg);
+			}
+			.btn-modal-save {
+				display: flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.5rem 1.1rem;
+				border-radius: 0.5rem;
+				background: var(--color-primary);
+				color: white;
+				font-size: 0.8125rem;
+				font-weight: 600;
+				cursor: pointer;
+				border: none;
+				font-family: inherit;
+				transition: opacity 0.15s;
+			}
+			.btn-modal-save:hover {
+				opacity: 0.88;
+			}
+			.btn-modal-save:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+
+			/* "Kamu" badge */
+			.self-badge {
+				font-size: 0.68rem;
+				font-weight: 700;
+				background: rgba(37, 99, 235, 0.1);
+				color: var(--color-primary);
+				padding: 0.1rem 0.4rem;
+				border-radius: 99px;
+				margin-left: 0.4rem;
+			}
+
+			/* Password visibility toggle */
+			.input-with-toggle {
+				position: relative;
+			}
+			.input-with-toggle .form-input {
+				width: 100%;
+				padding-right: 2.5rem;
+			}
+			.btn-toggle-pw {
+				position: absolute;
+				right: 0.6rem;
+				top: 50%;
+				transform: translateY(-50%);
+				background: none;
+				border: none;
+				cursor: pointer;
+				color: var(--color-text-muted);
+				display: flex;
+				align-items: center;
+			}
+
+			/* Modal Data Guru */
+			.data-tabs {
+				display: flex;
+				gap: 0.35rem;
+				flex-wrap: wrap;
+				margin-bottom: 1rem;
+			}
+			.data-tab {
+				padding: 0.35rem 0.85rem;
+				border-radius: 99px;
+				border: 1.5px solid var(--color-border);
+				background: transparent;
+				color: var(--color-text-muted);
+				font-size: 0.75rem;
+				font-weight: 600;
+				cursor: pointer;
+				font-family: inherit;
+				transition: all 0.15s;
+			}
+			.data-tab.active {
+				background: var(--color-primary);
+				color: white;
+				border-color: var(--color-primary);
+			}
+			.data-list-item {
+				padding: 0.6rem 0.75rem;
+				border-radius: 0.5rem;
+				background: var(--color-bg);
+				font-size: 0.8125rem;
+				margin-bottom: 0.4rem;
+			}
+			.data-list-item .item-title {
+				font-weight: 600;
+				color: var(--color-text);
+			}
+			.data-list-item .item-sub {
+				font-size: 0.75rem;
+				color: var(--color-text-muted);
+				margin-top: 0.15rem;
+			}
+			.data-empty {
+				text-align: center;
+				padding: 2rem 1rem;
+				color: var(--color-text-muted);
+				font-size: 0.8125rem;
+			}
+			.modal-box-wide {
+				max-width: 560px;
+			}
+		</style>
+
+		<script>
+			(function () {
+				const t = localStorage.getItem("tms-theme") || "light";
+				if (t === "dark") document.documentElement.classList.add("dark");
+			})();
+		</script>
+	</head>
+	<body>
+		<div class="dashboard-shell" id="dashboard-shell">
+			<div id="sidebar-root"></div>
+
+			<div class="dashboard-main">
+				<div id="navbar-root"></div>
+
+				<main class="dashboard-content">
+					<!-- Page Header -->
+					<div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+						<div>
+							<h2 class="text-xl font-bold">Manajemen Akun</h2>
+							<p class="text-sm mt-0.5" style="color: var(--color-text-muted)">Kelola nama, email, dan password semua akun pengguna TMS.</p>
+						</div>
+					</div>
+
+					<!-- Tabel akun -->
+					<div class="card-soft" style="overflow: hidden">
+						<!-- Toolbar -->
+						<div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap">
+							<input type="search" id="search-input" placeholder="Cari nama atau email..." style="flex: 1; min-width: 180px; padding: 0.5rem 0.85rem; border-radius: 0.55rem; border: 1.5px solid var(--color-border); background: var(--color-bg); color: var(--color-text); font-size: 0.8125rem; font-family: inherit; outline: none" oninput="filterAccounts(this.value)" />
+							<select id="filter-role" onchange="filterAccounts()" style="padding: 0.5rem 0.75rem; border-radius: 0.55rem; border: 1.5px solid var(--color-border); background: var(--color-bg); color: var(--color-text); font-size: 0.8125rem; font-family: inherit; outline: none">
+								<option value="">Semua Role</option>
+								<option value="admin">Admin</option>
+								<option value="teacher">Guru</option>
+							</select>
+						</div>
+
+						<!-- Skeleton old -->
+						<!-- <div id="table-skeleton" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem">
+							${[...Array(5)].map(() => `
+							<div style="display: flex; gap: 1rem; align-items: center">
+								<div class="skeleton" style="width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0"></div>
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem">
+									<div class="skeleton" style="height: 0.85rem; width: 40%"></div>
+									<div class="skeleton" style="height: 0.75rem; width: 55%"></div>
+								</div>
+								<div class="skeleton" style="height: 1.5rem; width: 4rem; border-radius: 99px"></div>
+								<div class="skeleton" style="height: 1.75rem; width: 5rem; border-radius: 0.4rem"></div>
+							</div>
+							`).join("")}
+						</div> -->
+
+						<!-- Skeleton -->
+						<div id="table-skeleton" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem">
+							<div style="display: flex; gap: 1rem; align-items: center">
+								<div class="skeleton" style="width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0"></div>
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem">
+									<div class="skeleton" style="height: 0.85rem; width: 40%"></div>
+									<div class="skeleton" style="height: 0.75rem; width: 55%"></div>
+								</div>
+								<div class="skeleton" style="height: 1.5rem; width: 4rem; border-radius: 99px"></div>
+								<div class="skeleton" style="height: 1.75rem; width: 5rem; border-radius: 0.4rem"></div>
+							</div>
+							<div style="display: flex; gap: 1rem; align-items: center">
+								<div class="skeleton" style="width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0"></div>
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem">
+									<div class="skeleton" style="height: 0.85rem; width: 40%"></div>
+									<div class="skeleton" style="height: 0.75rem; width: 55%"></div>
+								</div>
+								<div class="skeleton" style="height: 1.5rem; width: 4rem; border-radius: 99px"></div>
+								<div class="skeleton" style="height: 1.75rem; width: 5rem; border-radius: 0.4rem"></div>
+							</div>
+							<div style="display: flex; gap: 1rem; align-items: center">
+								<div class="skeleton" style="width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0"></div>
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem">
+									<div class="skeleton" style="height: 0.85rem; width: 40%"></div>
+									<div class="skeleton" style="height: 0.75rem; width: 55%"></div>
+								</div>
+								<div class="skeleton" style="height: 1.5rem; width: 4rem; border-radius: 99px"></div>
+								<div class="skeleton" style="height: 1.75rem; width: 5rem; border-radius: 0.4rem"></div>
+							</div>
+							<div style="display: flex; gap: 1rem; align-items: center">
+								<div class="skeleton" style="width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0"></div>
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem">
+									<div class="skeleton" style="height: 0.85rem; width: 40%"></div>
+									<div class="skeleton" style="height: 0.75rem; width: 55%"></div>
+								</div>
+								<div class="skeleton" style="height: 1.5rem; width: 4rem; border-radius: 99px"></div>
+								<div class="skeleton" style="height: 1.75rem; width: 5rem; border-radius: 0.4rem"></div>
+							</div>
+							<div style="display: flex; gap: 1rem; align-items: center">
+								<div class="skeleton" style="width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0"></div>
+								<div style="flex: 1; display: flex; flex-direction: column; gap: 0.3rem">
+									<div class="skeleton" style="height: 0.85rem; width: 40%"></div>
+									<div class="skeleton" style="height: 0.75rem; width: 55%"></div>
+								</div>
+								<div class="skeleton" style="height: 1.5rem; width: 4rem; border-radius: 99px"></div>
+								<div class="skeleton" style="height: 1.75rem; width: 5rem; border-radius: 0.4rem"></div>
+							</div>
+						</div>
+
+						<!-- Tabel -->
+						<div id="table-container" style="display: none">
+							<div class="accounts-table-wrapper">
+								<table class="accounts-table">
+									<thead>
+										<tr>
+											<th>Nama</th>
+											<th>Email</th>
+											<th>Role</th>
+											<th>Status</th>
+											<th style="width: 7rem">Aksi</th>
+										</tr>
+									</thead>
+									<tbody id="accounts-tbody"></tbody>
+								</table>
+							</div>
+						</div>
+
+						<!-- Empty -->
+						<div id="table-empty" style="display: none; padding: 3rem 1rem; text-align: center; color: var(--color-text-muted); font-size: 0.875rem">
+							<i data-lucide="users" style="width: 2.5rem; height: 2.5rem; opacity: 0.3; display: block; margin: 0 auto 0.75rem"></i>
+							Tidak ada akun yang ditemukan.
+						</div>
+					</div>
+				</main>
+			</div>
+		</div>
+
+		<!-- ── Modal Edit Akun ── -->
+		<div class="modal-overlay" id="edit-modal">
+			<div class="modal-box">
+				<div class="modal-header">
+					<h3 class="modal-title" id="modal-title">Edit Akun</h3>
+					<button class="modal-close" id="modal-close">
+						<i data-lucide="x" style="width: 0.9rem; height: 0.9rem"></i>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="form-group">
+						<label class="form-label">Nama Lengkap <span class="required">*</span></label>
+						<input type="text" id="field-name" class="form-input" placeholder="Nama lengkap" />
+						<p class="form-error" id="err-name"></p>
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Email <span class="required">*</span></label>
+						<input type="email" id="field-email" class="form-input" placeholder="email@sekolah.id" />
+						<p class="form-error" id="err-email"></p>
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Password Baru</label>
+						<div class="input-with-toggle">
+							<input type="password" id="field-password" class="form-input" placeholder="Kosongkan jika tidak diubah" />
+							<button type="button" class="btn-toggle-pw" onclick="togglePasswordVisibility()">
+								<i data-lucide="eye" id="pw-eye-icon" style="width: 0.9rem; height: 0.9rem"></i>
+							</button>
+						</div>
+						<p class="form-hint">Minimal 6 karakter. Kosongkan jika tidak ingin mengubah password.</p>
+						<p class="form-error" id="err-password"></p>
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Role</label>
+						<select id="field-role" class="form-select">
+							<option value="teacher">Guru (Teacher)</option>
+							<option value="admin">Admin</option>
+						</select>
+						<p class="form-hint">Mengubah role hanya memperbarui akses di TMS, tidak mempengaruhi data mengajar.</p>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn-modal-cancel" id="modal-cancel">Batal</button>
+					<button class="btn-modal-save" id="modal-save">
+						<i data-lucide="save" style="width: 0.8rem; height: 0.8rem"></i>
+						<span id="modal-save-text">Simpan</span>
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ── Modal Data Guru ── -->
+		<div class="modal-overlay" id="data-modal">
+			<div class="modal-box modal-box-wide">
+				<div class="modal-header">
+					<h3 class="modal-title" id="data-modal-title">Data Guru</h3>
+					<button class="modal-close" id="data-modal-close">
+						<i data-lucide="x" style="width: 0.9rem; height: 0.9rem"></i>
+					</button>
+				</div>
+				<div class="modal-body" style="max-height: 70vh; overflow-y: auto">
+					<!-- Tabs -->
+					<div class="data-tabs">
+						<button class="data-tab active" onclick="switchTab('classes')">Kelas</button>
+						<button class="data-tab" onclick="switchTab('subjects')">Mata Pelajaran</button>
+						<button class="data-tab" onclick="switchTab('students')">Siswa</button>
+						<button class="data-tab" onclick="switchTab('schedules')">Jadwal</button>
+						<button class="data-tab" onclick="switchTab('grades')">Nilai</button>
+					</div>
+					<!-- Konten tab -->
+					<div id="data-tab-content">
+						<div class="data-empty">Memuat data...</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn-modal-cancel" id="data-modal-cancel">Tutup</button>
+				</div>
+			</div>
+		</div>
+
+		<script type="module">
+			import { renderSidebar } from "../../components/sidebar.component.js";
+			import { renderNavbar } from "../../components/navbar.component.js";
+			import { getCurrentSession } from "../../services/auth.service.js";
+			import { getSupabaseClient } from "../../services/supabase.service.js";
+			import { getAllTeachers, adminUpdateAccount, toggleTeacherActive } from "../../services/account_management.service.js";
+			import { getTeacherData, getAllDataByTable } from "../../services/admin.service.js";
+			import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
+
+			// ── Auth guard ──
+			const session = await getCurrentSession();
+			if (!session) {
+				window.location.href = "../auth/login.html";
+			}
+
+			const supabase = await getSupabaseClient();
+			const { data: myProfile } = await supabase.from("teachers").select("role").eq("id", session.user.id).single();
+
+			// Guard: hanya admin yang boleh masuk
+			if (myProfile?.role !== "admin") {
+				window.location.href = "./index.html";
+			}
+
+			const isAdmin = true;
+			const myUserId = session.user.id;
+			const userName = session?.user?.user_metadata?.full_name || "Admin";
+
+			await renderSidebar({ userName, userRole: "Admin", isAdmin });
+			renderNavbar({
+				pageTitle: "Manajemen Akun",
+				pageSubtitle: "Kelola semua akun pengguna",
+				userName,
+			});
+
+			// ── State ──
+			let allAccounts = [];
+			let filteredAccounts = [];
+			let editingId = null;
+
+			// ── Load data ──
+			allAccounts = await getAllTeachers();
+			document.getElementById("table-skeleton").style.display = "none";
+			filteredAccounts = [...allAccounts];
+			renderTable();
+			lucide.createIcons();
+
+			// ── Filter ──
+			window.filterAccounts = function (query) {
+				const q = (typeof query === "string" ? query : document.getElementById("search-input").value).toLowerCase().trim();
+				const role = document.getElementById("filter-role").value;
+
+				filteredAccounts = allAccounts.filter((a) => {
+					const matchQ = !q || a.full_name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q);
+					const matchRole = !role || a.role === role;
+					return matchQ && matchRole;
+				});
+				renderTable();
+			};
+
+			// ── Render tabel ──
+			function renderTable() {
+				const tbody = document.getElementById("accounts-tbody");
+
+				if (filteredAccounts.length === 0) {
+					document.getElementById("table-container").style.display = "none";
+					document.getElementById("table-empty").style.display = "block";
+					lucide.createIcons();
+					return;
+				}
+
+				document.getElementById("table-empty").style.display = "none";
+				document.getElementById("table-container").style.display = "block";
+
+				tbody.innerHTML = filteredAccounts
+					.map((a) => {
+						const isSelf = a.id === myUserId;
+						const isActive = a.is_active !== false;
+						const roleBadge = a.role === "admin" ? `<span class="role-badge admin"><i data-lucide="shield-check" style="width:.65rem;height:.65rem"></i> Admin</span>` : `<span class="role-badge teacher"><i data-lucide="user" style="width:.65rem;height:.65rem"></i> Guru</span>`;
+
+						const statusCell = `
+        <span style="font-size:.8125rem;font-weight:600;color:${isActive ? "var(--color-success)" : "var(--color-danger)"}">
+          <span class="status-dot ${isActive ? "active" : "inactive"}"></span>
+          ${isActive ? "Aktif" : "Nonaktif"}
+        </span>`;
+
+						const toggleTitle = isActive ? "Nonaktifkan" : "Aktifkan";
+						const toggleIcon = isActive ? "user-x" : "user-check";
+						const toggleColor = isActive ? "danger" : "";
+
+						return `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:.65rem">
+              <div style="width:2rem;height:2rem;border-radius:50%;background:rgba(37,99,235,.1);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:var(--color-primary);flex-shrink:0">
+                ${(a.full_name ?? "?")[0].toUpperCase()}
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:.875rem">
+                  ${a.full_name}
+                  ${isSelf ? `<span class="self-badge">Kamu</span>` : ""}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--color-text-muted);font-size:.8125rem">${a.email}</td>
+          <td>${roleBadge}</td>
+          <td>${statusCell}</td>
+          <td>
+            <div style="display:flex;gap:.35rem">
+            	<button class="btn-row-action" onclick="openEditModal('${a.id}')" title="Edit akun">
+					<i data-lucide="pencil" style="width:.8rem;height:.8rem"></i>
+				</button>
+				<button class="btn-row-action" onclick="openDataModal('${a.id}', '${a.full_name}')" title="Lihat data guru">
+					<i data-lucide="database" style="width:.8rem;height:.8rem"></i>
+				</button>
+              ${
+					!isSelf
+						? `
+                <button class="btn-row-action ${toggleColor}" onclick="handleToggleActive('${a.id}', ${!isActive})" title="${toggleTitle}">
+                  <i data-lucide="${toggleIcon}" style="width:.8rem;height:.8rem"></i>
+                </button>
+              `
+						: ""
+				}
+            </div>
+          </td>
+        </tr>
+      `;
+					})
+					.join("");
+
+				lucide.createIcons();
+			}
+
+			// ── Modal ──
+			const modal = document.getElementById("edit-modal");
+
+			window.openEditModal = function (accountId) {
+				const acc = allAccounts.find((a) => a.id === accountId);
+				if (!acc) return;
+
+				editingId = accountId;
+
+				document.getElementById("field-name").value = acc.full_name ?? "";
+				document.getElementById("field-email").value = acc.email ?? "";
+				document.getElementById("field-password").value = "";
+				document.getElementById("field-role").value = acc.role ?? "teacher";
+				document.getElementById("err-name").textContent = "";
+				document.getElementById("err-email").textContent = "";
+				document.getElementById("err-password").textContent = "";
+				document.getElementById("field-name").classList.remove("is-invalid");
+				document.getElementById("field-email").classList.remove("is-invalid");
+				document.getElementById("field-password").classList.remove("is-invalid");
+
+				const isSelf = accountId === myUserId;
+				document.getElementById("modal-title").textContent = `Edit Akun${isSelf ? " (Kamu)" : ` — ${acc.full_name}`}`;
+
+				modal.classList.add("open");
+				lucide.createIcons();
+			};
+
+			function closeModal() {
+				modal.classList.remove("open");
+				editingId = null;
+			}
+
+			document.getElementById("modal-close").addEventListener("click", closeModal);
+			document.getElementById("modal-cancel").addEventListener("click", closeModal);
+			modal.addEventListener("click", (e) => {
+				if (e.target === modal) closeModal();
+			});
+
+			// ── Toggle password visibility ──
+			window.togglePasswordVisibility = function () {
+				const inp = document.getElementById("field-password");
+				const icon = document.getElementById("pw-eye-icon");
+				const isHidden = inp.type === "password";
+				inp.type = isHidden ? "text" : "password";
+				icon.setAttribute("data-lucide", isHidden ? "eye-off" : "eye");
+				lucide.createIcons();
+			};
+
+			// ── Simpan ──
+			document.getElementById("modal-save").addEventListener("click", async () => {
+				const name = document.getElementById("field-name").value.trim();
+				const email = document.getElementById("field-email").value.trim();
+				const password = document.getElementById("field-password").value;
+				const role = document.getElementById("field-role").value;
+
+				let valid = true;
+
+				if (!name) {
+					document.getElementById("err-name").textContent = "Nama tidak boleh kosong.";
+					document.getElementById("field-name").classList.add("is-invalid");
+					valid = false;
+				} else {
+					document.getElementById("err-name").textContent = "";
+					document.getElementById("field-name").classList.remove("is-invalid");
+				}
+
+				if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+					document.getElementById("err-email").textContent = "Email tidak valid.";
+					document.getElementById("field-email").classList.add("is-invalid");
+					valid = false;
+				} else {
+					document.getElementById("err-email").textContent = "";
+					document.getElementById("field-email").classList.remove("is-invalid");
+				}
+
+				if (password && password.length < 6) {
+					document.getElementById("err-password").textContent = "Password minimal 6 karakter.";
+					document.getElementById("field-password").classList.add("is-invalid");
+					valid = false;
+				} else {
+					document.getElementById("err-password").textContent = "";
+					document.getElementById("field-password").classList.remove("is-invalid");
+				}
+
+				if (!valid) return;
+
+				const saveBtn = document.getElementById("modal-save");
+				const saveText = document.getElementById("modal-save-text");
+				saveBtn.disabled = true;
+				saveText.textContent = "Menyimpan...";
+
+				// 1. Update via Edge Function (nama, email, password)
+				const payload = { targetUserId: editingId, fullName: name, email };
+				if (password) payload.password = password;
+
+				const { success, error } = await adminUpdateAccount(payload);
+
+				if (!success) {
+					showError(error || "Gagal memperbarui akun.");
+					saveBtn.disabled = false;
+					saveText.textContent = "Simpan";
+					return;
+				}
+
+				// 2. Update role di public.teachers (tidak lewat Edge Function,
+				//    karena admin punya RLS full access ke tabel ini)
+				const supabaseClient = await getSupabaseClient();
+				const { error: roleError } = await supabaseClient.from("teachers").update({ role, updated_at: new Date().toISOString() }).eq("id", editingId);
+
+				saveBtn.disabled = false;
+				saveText.textContent = "Simpan";
+
+				if (roleError) {
+					showError("Akun berhasil diperbarui, tapi gagal update role: " + roleError.message);
+				} else {
+					showToast("success", "Akun berhasil diperbarui!");
+				}
+
+				closeModal();
+
+				// Reload data
+				allAccounts = await getAllTeachers();
+				filteredAccounts = [...allAccounts];
+				renderTable();
+			});
+
+			// ── Toggle aktif/nonaktif ──
+			window.handleToggleActive = async function (accountId, makeActive) {
+				const acc = allAccounts.find((a) => a.id === accountId);
+				const action = makeActive ? "mengaktifkan" : "menonaktifkan";
+				const ok = await showConfirm(`${makeActive ? "Aktifkan" : "Nonaktifkan"} akun ini?`, `Kamu akan ${action} akun "${acc?.full_name}".`);
+				if (!ok) return;
+
+				const { success, error } = await toggleTeacherActive(accountId, makeActive);
+				if (!success) {
+					showError(error || "Gagal mengubah status akun.");
+					return;
+				}
+
+				showToast("success", `Akun berhasil ${makeActive ? "diaktifkan" : "dinonaktifkan"}.`);
+				allAccounts = await getAllTeachers();
+				filteredAccounts = [...allAccounts];
+				renderTable();
+			};
+
+			// ── Modal Data Guru ──
+			const dataModal = document.getElementById("data-modal");
+			let currentTeacherId = null;
+			let currentTab = "classes";
+			let cachedData = {};
+
+			window.openDataModal = async function (teacherId, teacherName) {
+				currentTeacherId = teacherId;
+				currentTab = "classes";
+				cachedData = {};
+
+				document.getElementById("data-modal-title").textContent = `Data: ${teacherName}`;
+				dataModal.classList.add("open");
+				lucide.createIcons();
+
+				// Set tab aktif
+				document.querySelectorAll(".data-tab").forEach((t) => t.classList.remove("active"));
+				document.querySelector(".data-tab").classList.add("active");
+
+				await loadTab("classes");
+			};
+
+			function closeDataModal() {
+				dataModal.classList.remove("open");
+				currentTeacherId = null;
+				cachedData = {};
+			}
+
+			document.getElementById("data-modal-close").addEventListener("click", closeDataModal);
+			document.getElementById("data-modal-cancel").addEventListener("click", closeDataModal);
+			dataModal.addEventListener("click", (e) => {
+				if (e.target === dataModal) closeDataModal();
+			});
+
+			window.switchTab = async function (tab) {
+				currentTab = tab;
+				document.querySelectorAll(".data-tab").forEach((t) => {
+					t.classList.toggle("active", t.getAttribute("onclick").includes(`'${tab}'`));
+				});
+				await loadTab(tab);
+			};
+
+			async function loadTab(tab) {
+				const content = document.getElementById("data-tab-content");
+				content.innerHTML = `<div class="data-empty">Memuat...</div>`;
+
+				// Cache supaya tidak re-fetch tiap klik tab
+				if (!cachedData[tab]) {
+					cachedData[tab] = await getTeacherData(tab, currentTeacherId);
+				}
+
+				const data = cachedData[tab];
+
+				if (!data || data.length === 0) {
+					content.innerHTML = `<div class="data-empty">Tidak ada data ${tab} untuk guru ini.</div>`;
+					return;
+				}
+
+				content.innerHTML = data.map((item) => renderDataItem(tab, item)).join("");
+			}
+
+			function renderDataItem(tab, item) {
+				const templates = {
+					classes: `
+					<div class="data-list-item">
+						<div class="item-title">${item.name ?? "—"}</div>
+						<div class="item-sub">Tingkat Kelas: ${item.grade ?? "—"}</div>
+					</div>`,
+					subjects: `
+					<div class="data-list-item">
+						<div class="item-title">${item.name ?? "—"}</div>
+						<div class="item-sub">Kode: ${item.code ?? "—"}</div>
+					</div>`,
+					students: `
+					<div class="data-list-item">
+						<div class="item-title">${item.full_name ?? "—"}</div>
+						<div class="item-sub">NIS: ${item.nis ?? "—"} · ${item.gender ?? "—"}</div>
+					</div>`,
+					schedules: `
+					<div class="data-list-item">
+						<div class="item-title">${item.day ?? "—"} · ${item.start_time?.slice(0, 5) ?? "—"} – ${item.end_time?.slice(0, 5) ?? "—"}</div>
+						<div class="item-sub">Ruang: ${item.room ?? "—"}</div>
+					</div>`,
+					grades: `
+					<div class="data-list-item">
+						<div class="item-title">Nilai: ${item.score ?? "—"}</div>
+						<div class="item-sub">Tipe: ${item.type ?? "—"} · Semester: ${item.semester ?? "—"}</div>
+					</div>`,
+				};
+				return templates[tab] ?? `<div class="data-list-item">${JSON.stringify(item)}</div>`;
+			}
+		</script>
+	</body>
+</html>

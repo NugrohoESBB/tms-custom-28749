@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Siswa — Teacher Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../../assets/css/students.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem("tms-theme") || "light";
+      if (t === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+</head>
+<body>
+
+<div class="dashboard-shell" id="dashboard-shell">
+
+  <div id="sidebar-root"></div>
+
+  <div class="dashboard-main">
+    <div id="navbar-root"></div>
+
+    <main class="dashboard-content">
+
+      <!-- ── Page header ── -->
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-xl font-bold">Data Siswa</h2>
+          <p class="text-sm mt-0.5" style="color:var(--color-text-muted)">
+            Kelola data siswa yang terdaftar di kelas kamu.
+          </p>
+        </div>
+        <button class="btn-add-student" id="btn-add-student">
+          <i data-lucide="user-plus" style="width:.875rem;height:.875rem"></i>
+          Tambah Siswa
+        </button>
+      </div>
+
+      <!-- ── Stat bar ── -->
+      <div class="student-stat-bar" id="stat-bar">
+        <!-- Skeleton diisi oleh JS saat halaman load -->
+      </div>
+
+      <!-- ── Toolbar ── -->
+      <div class="students-toolbar">
+        <div class="search-wrapper">
+          <i data-lucide="search" class="search-icon" style="width:.875rem;height:.875rem"></i>
+          <input
+            type="text"
+            id="search-input"
+            class="students-search"
+            placeholder="Cari nama atau NIS..."
+          />
+        </div>
+
+        <select id="filter-class" class="students-filter-select">
+          <option value="">Semua Kelas</option>
+        </select>
+
+        <select id="filter-status" class="students-filter-select">
+          <option value="">Semua Status</option>
+          <option value="true">Aktif</option>
+          <option value="false">Nonaktif</option>
+        </select>
+      </div>
+
+      <!-- ── Tabel Siswa ── -->
+      <div class="students-table-wrapper">
+        <table class="students-table">
+          <thead>
+            <tr>
+              <th data-col="full_name" class="sorted">
+                Nama Siswa <i data-lucide="chevrons-up-down" style="display:inline;width:.7rem;height:.7rem;vertical-align:middle;margin-left:.2rem"></i>
+              </th>
+              <th data-col="nis">NIS</th>
+              <th data-col="gender">Gender</th>
+              <th>Kelas</th>
+              <th data-col="birth_date">Tgl. Lahir</th>
+              <th>Status</th>
+              <th style="width:6rem">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="students-tbody">
+            <!-- Skeleton diisi oleh JS saat halaman load -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── Pagination ── -->
+      <div class="pagination" id="pagination" style="display:none">
+        <span id="pagination-info"></span>
+        <div class="pagination-btns" id="pagination-btns"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Tambah / Edit Siswa
+     ============================================================ -->
+<div class="modal-overlay" id="student-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-title">Tambah Siswa</h3>
+      <button class="modal-close" id="modal-close">
+        <i data-lucide="x" style="width:.9rem;height:.9rem"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Nama lengkap -->
+      <div class="form-group">
+        <label class="form-label">
+          Nama Lengkap <span class="required">*</span>
+        </label>
+        <input type="text" id="field-name" class="form-input" placeholder="Contoh: Budi Santoso" />
+        <p class="form-error" id="err-name"></p>
+      </div>
+
+      <!-- NIS & Gender (2 kolom) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">NIS</label>
+          <input type="text" id="field-nis" class="form-input" placeholder="Nomor Induk Siswa" />
+          <p class="form-error" id="err-nis"></p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jenis Kelamin</label>
+          <select id="field-gender" class="form-select">
+            <option value="">— Pilih —</option>
+            <option value="L">Laki-laki</option>
+            <option value="P">Perempuan</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tanggal lahir -->
+      <div class="form-group">
+        <label class="form-label">Tanggal Lahir</label>
+        <input type="date" id="field-birth-date" class="form-input" />
+      </div>
+
+      <!-- Kelas (tahun ajaran aktif) -->
+      <div class="form-group">
+        <label class="form-label">Kelas</label>
+        <select id="field-class" class="form-select">
+          <option value="">— Belum masuk kelas —</option>
+          <!-- diisi JS -->
+        </select>
+      </div>
+
+      <!-- Status aktif (hanya tampil saat mode edit) -->
+      <div class="form-group" id="field-status-group" style="display:none">
+        <label class="form-label">Status</label>
+        <select id="field-status" class="form-select">
+          <option value="true">Aktif</option>
+          <option value="false">Nonaktif</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" id="modal-cancel">Batal</button>
+      <button class="btn-modal-save" id="modal-save">
+        <i data-lucide="save" style="width:.8rem;height:.8rem"></i>
+        <span id="modal-save-text">Simpan</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DETAIL DRAWER: Info lengkap siswa
+     ============================================================ -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<aside class="detail-drawer" id="detail-drawer">
+  <div class="drawer-header">
+    <span class="drawer-title">Detail Siswa</span>
+    <button class="drawer-close" id="drawer-close">
+      <i data-lucide="x" style="width:.9rem;height:.9rem"></i>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawer-body">
+    <!-- Diisi JS -->
+  </div>
+</aside>
+
+
+<!-- ============================================================
+     SCRIPT
+     ============================================================ -->
+<script type="module">
+  import { qs, getCurrentAcademicYear } from "../../helpers/dom.helper.js";
+  import { renderSidebar }   from "../../components/sidebar.component.js";
+  import { renderNavbar }    from "../../components/navbar.component.js";
+  import { getCurrentSession } from "../../services/auth.service.js";
+  import {
+    getStudents,
+    getStudentById,
+    createStudent,
+    updateStudent,
+    deleteStudent,
+    getClassesForFilter,
+    getAttendanceSummaryForStudent,
+    setStudentClass,
+  } from "../../services/students.service.js";
+  import { showToast, showConfirm, showError } from "../../utils/notification.util.js";
+  import { getSupabaseClient } from "../../services/supabase.service.js";
+
+  // ── Auth guard ──
+  const session = await getCurrentSession();
+  if (!session) { window.location.href = "../auth/login.html"; }
+
+  const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+  // Cek role dari public.teachers
+  const supabaseForRole = await getSupabaseClient();
+  const { data: myProfile } = await supabaseForRole
+    .from("teachers")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+  const isAdmin = myProfile?.role === "admin";
+
+  await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+  renderNavbar({
+    pageTitle:    "Data Siswa",
+    pageSubtitle: "Manajemen siswa",
+    userName,
+  });
+
+  // ── Render skeleton sementara data di-fetch ──
+  qs("#stat-bar").innerHTML = [...Array(4)].map(() => `
+    <div class="student-stat-card">
+      <div class="skeleton student-stat-icon" style="width:2.25rem;height:2.25rem;border-radius:.55rem"></div>
+      <div style="flex:1">
+        <div class="skeleton skeleton-text" style="width:2.5rem"></div>
+        <div class="skeleton skeleton-sub" style="width:4rem"></div>
+      </div>
+    </div>
+  `).join("");
+
+  qs("#students-tbody").innerHTML = [...Array(6)].map(() => `
+    <tr>
+      <td>
+        <div class="student-name-cell">
+          <div class="skeleton skeleton-avatar"></div>
+          <div style="flex:1">
+            <div class="skeleton skeleton-text" style="width:8rem"></div>
+            <div class="skeleton skeleton-sub" style="width:5rem"></div>
+          </div>
+        </div>
+      </td>
+      <td><div class="skeleton skeleton-text" style="width:5rem"></div></td>
+      <td><div class="skeleton skeleton-text" style="width:2.5rem"></div></td>
+      <td><div class="skeleton skeleton-text" style="width:4rem"></div></td>
+      <td><div class="skeleton skeleton-text" style="width:6rem"></div></td>
+      <td><div class="skeleton skeleton-text" style="width:4rem"></div></td>
+      <td></td>
+    </tr>
+  `).join("");
+
+  // ── State ──
+  let allStudents   = [];    // data mentah dari DB
+  let filteredList  = [];    // setelah filter/search
+  let sortCol       = "full_name";
+  let sortAsc       = true;
+  let currentPage   = 1;
+  const PAGE_SIZE   = 15;
+  let editingId     = null;  // null = mode tambah, uuid = mode edit
+
+  // Warna avatar berdasarkan huruf pertama (konsisten via hash sederhana)
+  const AVATAR_COLORS = [
+    "#2563eb","#7c3aed","#db2777","#dc2626",
+    "#d97706","#16a34a","#0891b2","#9333ea",
+  ];
+
+  function avatarColor(name) {
+    const code = (name || "?").charCodeAt(0);
+    return AVATAR_COLORS[code % AVATAR_COLORS.length];
+  }
+
+  function initials(name) {
+    return (name || "?")
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
+  }
+
+  // ── Load awal ──
+  const [students, classes] = await Promise.all([
+    getStudents(),
+    getClassesForFilter(),
+  ]);
+
+  allStudents = students;
+  populateClassFilter(classes);
+  populateClassSelect(classes);
+  applyFiltersAndRender();
+
+  // ── Isi dropdown filter kelas ──
+  function populateClassFilter(classes) {
+    const sel = qs("#filter-class");
+    classes.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Isi dropdown kelas di MODAL (tambah/edit) ──
+  function populateClassSelect(classes) {
+    const sel = qs("#field-class");
+    classes.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Filter & Search ──
+  function applyFiltersAndRender() {
+    const search  = qs("#search-input").value.trim().toLowerCase();
+    const classId = qs("#filter-class").value;
+    const status  = qs("#filter-status").value;
+
+    filteredList = allStudents.filter((s) => {
+      const matchSearch =
+        !search ||
+        s.full_name.toLowerCase().includes(search) ||
+        (s.nis || "").toLowerCase().includes(search);
+
+      const matchClass =
+        !classId ||
+        (s.class_students || []).some((cs) => cs.classes?.id === classId);
+
+      const matchStatus =
+        status === "" || String(s.is_active) === status;
+
+      return matchSearch && matchClass && matchStatus;
+    });
+
+    // Sort
+    filteredList.sort((a, b) => {
+      const va = (a[sortCol] ?? "").toString().toLowerCase();
+      const vb = (b[sortCol] ?? "").toString().toLowerCase();
+      return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+
+    currentPage = 1;
+    renderStatBar();
+    renderTable();
+    renderPagination();
+  }
+
+  // Debounce pencarian supaya tidak terlalu sering memfilter
+  let searchTimer;
+  qs("#search-input").addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFiltersAndRender, 250);
+  });
+  qs("#filter-class").addEventListener("change", applyFiltersAndRender);
+  qs("#filter-status").addEventListener("change", applyFiltersAndRender);
+
+  // ── Stat bar ──
+  function renderStatBar() {
+    const total   = allStudents.length;
+    const aktif   = allStudents.filter((s) => s.is_active).length;
+    const lakiL   = allStudents.filter((s) => s.gender === "L").length;
+    const perempP = allStudents.filter((s) => s.gender === "P").length;
+
+    qs("#stat-bar").innerHTML = `
+      <div class="student-stat-card">
+        <div class="student-stat-icon" style="background:rgba(37,99,235,.1)">
+          <i data-lucide="users" style="width:1rem;height:1rem;color:var(--color-primary)"></i>
+        </div>
+        <div class="student-stat-info">
+          <div class="student-stat-value">${total}</div>
+          <div class="student-stat-label">Total Siswa</div>
+        </div>
+      </div>
+      <div class="student-stat-card">
+        <div class="student-stat-icon" style="background:rgba(34,197,94,.1)">
+          <i data-lucide="user-check" style="width:1rem;height:1rem;color:var(--color-success)"></i>
+        </div>
+        <div class="student-stat-info">
+          <div class="student-stat-value">${aktif}</div>
+          <div class="student-stat-label">Siswa Aktif</div>
+        </div>
+      </div>
+      <div class="student-stat-card">
+        <div class="student-stat-icon" style="background:rgba(37,99,235,.08)">
+          <i data-lucide="user" style="width:1rem;height:1rem;color:var(--color-primary)"></i>
+        </div>
+        <div class="student-stat-info">
+          <div class="student-stat-value">${lakiL}</div>
+          <div class="student-stat-label">Laki-laki</div>
+        </div>
+      </div>
+      <div class="student-stat-card">
+        <div class="student-stat-icon" style="background:rgba(236,72,153,.1)">
+          <i data-lucide="user" style="width:1rem;height:1rem;color:#db2777"></i>
+        </div>
+        <div class="student-stat-info">
+          <div class="student-stat-value">${perempP}</div>
+          <div class="student-stat-label">Perempuan</div>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+  }
+
+  // ── Render tabel ──
+  function renderTable() {
+    const tbody = qs("#students-tbody");
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page  = filteredList.slice(start, start + PAGE_SIZE);
+
+    if (filteredList.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">
+            <div class="students-empty">
+              <i data-lucide="users" style="width:2.5rem;height:2.5rem"></i>
+              <p>Belum ada siswa yang sesuai filter.</p>
+            </div>
+          </td>
+        </tr>
+      `;
+      lucide.createIcons();
+      return;
+    }
+
+    tbody.innerHTML = page.map((s) => {
+      const color  = avatarColor(s.full_name);
+      const inits  = initials(s.full_name);
+      const gender = s.gender
+        ? `<span class="gender-badge ${s.gender}">${s.gender === "L" ? "Laki-laki" : "Perempuan"}</span>`
+        : `<span style="color:var(--color-text-muted);font-size:.75rem">—</span>`;
+
+      const kelas = (s.class_students || [])
+        .map((cs) => cs.classes?.name)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((n) => `<span class="class-badge">${n}</span>`)
+        .join(" ") || `<span style="color:var(--color-text-muted);font-size:.75rem">—</span>`;
+
+      const birthDate = s.birth_date
+        ? new Date(s.birth_date).toLocaleDateString("id-ID", {
+            day: "numeric", month: "short", year: "numeric"
+          })
+        : "—";
+
+      const statusBadge = s.is_active
+        ? `<span class="active-badge aktif"><span class="active-dot"></span>Aktif</span>`
+        : `<span class="active-badge nonaktif"><span class="active-dot"></span>Nonaktif</span>`;
+
+      return `
+        <tr data-id="${s.id}">
+          <td>
+            <div class="student-name-cell">
+              <div class="student-avatar" style="background:${color}">${inits}</div>
+              <div class="student-name-info">
+                <div class="student-full-name">${s.full_name}</div>
+                <div class="student-nis">${s.nis || "NIS belum diisi"}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--color-text-muted);font-size:.8125rem">${s.nis || "—"}</td>
+          <td>${gender}</td>
+          <td>${kelas}</td>
+          <td style="color:var(--color-text-muted);font-size:.8125rem;white-space:nowrap">${birthDate}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="row-actions">
+              <button class="btn-row-action btn-detail" data-id="${s.id}" title="Lihat detail">
+                <i data-lucide="eye" style="width:.8rem;height:.8rem"></i>
+              </button>
+              <button class="btn-row-action btn-edit" data-id="${s.id}" title="Edit">
+                <i data-lucide="pencil" style="width:.8rem;height:.8rem"></i>
+              </button>
+              <button class="btn-row-action danger btn-delete" data-id="${s.id}" title="Hapus">
+                <i data-lucide="trash-2" style="width:.8rem;height:.8rem"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    lucide.createIcons();
+    bindRowActions();
+  }
+
+  // ── Bind aksi per baris ──
+  function bindRowActions() {
+    // Klik nama siswa → buka drawer
+    qs("#students-tbody").querySelectorAll("tr[data-id]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if (e.target.closest(".row-actions")) return; // jangan buka drawer kalau klik tombol
+        openDrawer(row.dataset.id);
+      });
+    });
+
+    // Detail
+    document.querySelectorAll(".btn-detail").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openDrawer(btn.dataset.id);
+      });
+    });
+
+    // Edit
+    document.querySelectorAll(".btn-edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openModal("edit", btn.dataset.id);
+      });
+    });
+
+    // Hapus
+    document.querySelectorAll(".btn-delete").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const student = allStudents.find((s) => s.id === btn.dataset.id);
+        const ok = await showConfirm(
+            `Nonaktifkan ${student?.full_name ?? "siswa ini"}?`,
+            "Status siswa akan diubah menjadi Nonaktif."
+        );
+        if (!ok) return;
+
+        const { success, error } = await deleteStudent(btn.dataset.id);
+        if (!success) { showError(error); return; }
+
+        showToast("success", "Siswa berhasil dinonaktifkan.");
+        await refreshStudents();
+      });
+    });
+  }
+
+  // ── Sorting ──
+  document.querySelectorAll(".students-table thead th[data-col]").forEach((th) => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      if (sortCol === col) {
+        sortAsc = !sortAsc;
+      } else {
+        sortCol = col;
+        sortAsc = true;
+      }
+      document.querySelectorAll(".students-table thead th").forEach((h) =>
+        h.classList.toggle("sorted", h.dataset.col === sortCol)
+      );
+      applyFiltersAndRender();
+    });
+  });
+
+  // ── Pagination ──
+  function renderPagination() {
+    const totalPages = Math.ceil(filteredList.length / PAGE_SIZE);
+    const pag = qs("#pagination");
+    const info = qs("#pagination-info");
+    const btns = qs("#pagination-btns");
+
+    if (totalPages <= 1) { pag.style.display = "none"; return; }
+    pag.style.display = "flex";
+
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end   = Math.min(currentPage * PAGE_SIZE, filteredList.length);
+    info.textContent = `Menampilkan ${start}–${end} dari ${filteredList.length} siswa`;
+
+    let html = `
+      <button class="page-btn" id="pg-prev" ${currentPage === 1 ? "disabled" : ""}>
+        <i data-lucide="chevron-left" style="width:.8rem;height:.8rem"></i>
+      </button>
+    `;
+
+    for (let p = 1; p <= totalPages; p++) {
+      if (totalPages > 7 && Math.abs(p - currentPage) > 2 && p !== 1 && p !== totalPages) {
+        if (p === currentPage - 3 || p === currentPage + 3) html += `<span class="page-btn" style="cursor:default">…</span>`;
+        continue;
+      }
+      html += `<button class="page-btn ${p === currentPage ? "active" : ""}" data-page="${p}">${p}</button>`;
+    }
+
+    html += `
+      <button class="page-btn" id="pg-next" ${currentPage === totalPages ? "disabled" : ""}>
+        <i data-lucide="chevron-right" style="width:.8rem;height:.8rem"></i>
+      </button>
+    `;
+
+    btns.innerHTML = html;
+    lucide.createIcons();
+
+    qs("#pg-prev")?.addEventListener("click", () => { if (currentPage > 1) { currentPage--; renderTable(); renderPagination(); } });
+    qs("#pg-next")?.addEventListener("click", () => { if (currentPage < totalPages) { currentPage++; renderTable(); renderPagination(); } });
+    btns.querySelectorAll("[data-page]").forEach((btn) => {
+      btn.addEventListener("click", () => { currentPage = +btn.dataset.page; renderTable(); renderPagination(); });
+    });
+  }
+
+  // ── Modal: Tambah / Edit ──
+  const modal     = qs("#student-modal");
+  const modalTitle = qs("#modal-title");
+  const saveText  = qs("#modal-save-text");
+  const saveBtn   = qs("#modal-save");
+
+  function openModal(mode, studentId = null) {
+    editingId = studentId;
+
+    // Reset form
+    qs("#field-name").value       = "";
+    qs("#field-nis").value        = "";
+    qs("#field-gender").value     = "";
+    qs("#field-birth-date").value = "";
+    qs("#field-class").value      = "";
+    qs("#err-name").textContent   = "";
+    qs("#err-nis").textContent    = "";
+    qs("#field-status-group").style.display = "none";
+    qs("#field-name").classList.remove("is-invalid");
+    qs("#field-nis").classList.remove("is-invalid");
+
+    if (mode === "edit" && studentId) {
+      const s = allStudents.find((s) => s.id === studentId);
+      if (!s) return;
+      modalTitle.textContent        = "Edit Siswa";
+      saveText.textContent          = "Simpan Perubahan";
+      qs("#field-name").value       = s.full_name;
+      qs("#field-nis").value        = s.nis || "";
+      qs("#field-gender").value     = s.gender || "";
+      qs("#field-birth-date").value = s.birth_date || "";
+
+      // Prefill kelas siswa utk tahun ajaran aktif
+      const cy   = getCurrentAcademicYear();
+      const csNow = (s.class_students || []).find((cs) => cs.academic_year === cy);
+      qs("#field-class").value = csNow?.classes?.id || "";
+      qs("#field-status-group").style.display = "block";
+      qs("#field-status").value     = String(s.is_active);
+    } else {
+      modalTitle.textContent = "Tambah Siswa";
+      saveText.textContent   = "Tambah";
+    }
+
+    modal.classList.add("open");
+    qs("#field-name").focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+    editingId = null;
+  }
+
+  qs("#btn-add-student").addEventListener("click", () => openModal("add"));
+  qs("#modal-close").addEventListener("click", closeModal);
+  qs("#modal-cancel").addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+  // Simpan
+  saveBtn.addEventListener("click", async () => {
+    const name = qs("#field-name").value.trim();
+
+    // Validasi minimal
+    let valid = true;
+    if (!name) {
+      qs("#err-name").textContent = "Nama tidak boleh kosong.";
+      qs("#field-name").classList.add("is-invalid");
+      valid = false;
+    } else {
+      qs("#err-name").textContent = "";
+      qs("#field-name").classList.remove("is-invalid");
+    }
+    if (!valid) return;
+
+    const payload = {
+      fullName:  name,
+      nis:       qs("#field-nis").value.trim() || null,
+      gender:    qs("#field-gender").value || null,
+      birthDate: qs("#field-birth-date").value || null,
+    };
+
+    saveBtn.disabled = true;
+    saveText.textContent = "Menyimpan...";
+
+    let result;
+    if (editingId) {
+      payload.isActive = qs("#field-status").value === "true";
+      result = await updateStudent(editingId, payload);
+      if (!result.success) { showError(result.error); }
+      else { showToast("success", "Data siswa berhasil diperbarui."); }
+    } else {
+      result = await createStudent(payload);
+      if (result.error) { showError(result.error); }
+      else { showToast("success", "Siswa baru berhasil ditambahkan."); }
+    }
+
+    saveBtn.disabled    = false;
+    saveText.textContent = editingId ? "Simpan Perubahan" : "Tambah";
+
+    if (result.success !== false && !result.error) {
+      const studentId = editingId || result.data?.id;
+      const classId    = qs("#field-class").value || null;
+
+      if (studentId) {
+        await setStudentClass(studentId, classId, getCurrentAcademicYear());
+      }
+
+      closeModal();
+      await refreshStudents();
+    }
+  });
+
+  // ── Detail Drawer ──
+  const drawer        = qs("#detail-drawer");
+  const drawerOverlay = qs("#drawer-overlay");
+  const drawerBody    = qs("#drawer-body");
+
+  function closeDrawer() {
+    drawer.classList.remove("open");
+    drawerOverlay.classList.remove("open");
+  }
+
+  qs("#drawer-close").addEventListener("click", closeDrawer);
+  drawerOverlay.addEventListener("click", closeDrawer);
+
+  async function openDrawer(studentId) {
+    drawerBody.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem 0">
+        <div class="skeleton" style="width:4rem;height:4rem;border-radius:50%"></div>
+        <div class="skeleton skeleton-text" style="width:8rem"></div>
+        <div class="skeleton skeleton-sub" style="width:5rem"></div>
+      </div>
+    `;
+    drawer.classList.add("open");
+    drawerOverlay.classList.add("open");
+
+    const [student, attendance] = await Promise.all([
+      getStudentById(studentId),
+      getAttendanceSummaryForStudent(studentId),
+    ]);
+
+    if (!student) { drawerBody.innerHTML = `<p style="color:var(--color-text-muted);font-size:.875rem;text-align:center;padding:2rem">Data tidak ditemukan.</p>`; return; }
+
+    const color    = avatarColor(student.full_name);
+    const inits    = initials(student.full_name);
+    const kelasArr = (student.class_students || []).map((cs) => cs.classes?.name).filter(Boolean);
+
+    const pct = attendance.total > 0
+      ? Math.round((attendance.hadir / attendance.total) * 100)
+      : null;
+
+    drawerBody.innerHTML = `
+      <!-- Avatar & nama -->
+      <div style="text-align:center;padding-bottom:1rem;border-bottom:1px solid var(--color-border)">
+        <div class="drawer-avatar" style="background:${color}">${inits}</div>
+        <div class="drawer-student-name">${student.full_name}</div>
+        <div class="drawer-student-nis">${student.nis ? `NIS: ${student.nis}` : "NIS belum diisi"}</div>
+        <div style="margin-top:.5rem">
+          ${student.is_active
+            ? `<span class="active-badge aktif"><span class="active-dot"></span>Aktif</span>`
+            : `<span class="active-badge nonaktif"><span class="active-dot"></span>Nonaktif</span>`
+          }
+        </div>
+      </div>
+
+      <!-- Info personal -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">Informasi Personal</div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Jenis Kelamin</span>
+          <span class="drawer-info-value">${
+            student.gender === "L" ? "Laki-laki" :
+            student.gender === "P" ? "Perempuan" : "—"
+          }</span>
+        </div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Tanggal Lahir</span>
+          <span class="drawer-info-value">${
+            student.birth_date
+              ? new Date(student.birth_date).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+              : "—"
+          }</span>
+        </div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Terdaftar sejak</span>
+          <span class="drawer-info-value">${
+            new Date(student.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+          }</span>
+        </div>
+      </div>
+
+      <!-- Kelas -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">Kelas</div>
+        ${kelasArr.length > 0
+          ? kelasArr.map((k) => `<span class="class-badge" style="margin-right:.35rem;margin-bottom:.35rem">${k}</span>`).join("")
+          : `<p style="font-size:.8125rem;color:var(--color-text-muted)">Belum terdaftar di kelas manapun.</p>`
+        }
+      </div>
+
+      <!-- Rekap kehadiran -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">
+          Rekap Kehadiran
+          ${pct !== null ? `<span style="float:right;color:var(--color-text);font-size:.8rem">${pct}% hadir</span>` : ""}
+        </div>
+        <div class="attendance-mini-grid">
+          <div class="attendance-mini-card hadir">
+            <div class="attendance-mini-num">${attendance.hadir}</div>
+            <div class="attendance-mini-label">Hadir</div>
+          </div>
+          <div class="attendance-mini-card izin">
+            <div class="attendance-mini-num">${attendance.izin}</div>
+            <div class="attendance-mini-label">Izin</div>
+          </div>
+          <div class="attendance-mini-card sakit">
+            <div class="attendance-mini-num">${attendance.sakit}</div>
+            <div class="attendance-mini-label">Sakit</div>
+          </div>
+          <div class="attendance-mini-card alpha">
+            <div class="attendance-mini-num">${attendance.alpha}</div>
+            <div class="attendance-mini-label">Alpha</div>
+          </div>
+        </div>
+        <p style="font-size:.72rem;color:var(--color-text-muted);margin-top:.5rem;text-align:right">
+          Total ${attendance.total} sesi tercatat
+        </p>
+      </div>
+
+      <!-- Tombol aksi di drawer -->
+      <div style="display:flex;gap:.5rem;margin-top:1.5rem">
+        <button
+          onclick="document.getElementById('detail-drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open');"
+          style="flex:1;padding:.55rem;border-radius:.55rem;border:1.5px solid var(--color-border);background:transparent;font-size:.8125rem;font-weight:600;cursor:pointer;color:var(--color-text-muted);font-family:inherit"
+        >
+          Tutup
+        </button>
+        <button
+          id="drawer-edit-btn"
+          data-id="${student.id}"
+          style="flex:1;padding:.55rem;border-radius:.55rem;background:var(--color-primary);color:white;font-size:.8125rem;font-weight:600;border:none;cursor:pointer;font-family:inherit"
+        >
+          Edit Data
+        </button>
+      </div>
+    `;
+
+    lucide.createIcons();
+
+    qs("#drawer-edit-btn")?.addEventListener("click", () => {
+      closeDrawer();
+      openModal("edit", student.id);
+    });
+  }
+
+  // ── Refresh data dari DB ──
+  async function refreshStudents() {
+    allStudents = await getStudents();
+    applyFiltersAndRender();
+  }
+</script>
+
+</body>
+</html>

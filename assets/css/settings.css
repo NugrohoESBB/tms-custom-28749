@@ -1,0 +1,672 @@
+/* ============================================================
+   SETTINGS CSS
+   ============================================================
+   Style khusus untuk halaman settings.html.
+   Berisi:
+   1. Layout dua kolom (nav kiri + konten kanan).
+   2. Slider bobot nilai.
+   3. Toggle switch komponen tambahan.
+   4. Grid skala grade.
+   5. Preview formula visual.
+   ============================================================ */
+
+/* ── Layout ── */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Nav kiri ── */
+.settings-nav {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: calc(var(--navbar-height, 64px) + 1rem);
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+}
+
+.settings-nav-item:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.settings-nav-item.active {
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--color-primary);
+}
+
+/* ── Konten ── */
+.settings-content {
+  min-width: 0;
+}
+
+.settings-section {
+  display: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+}
+
+.settings-section.active {
+  display: block;
+}
+
+.settings-section-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.35rem;
+}
+
+.settings-section-desc {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+/* ── Total weight bar ── */
+.weight-total-bar {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.65rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.weight-total-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.weight-total-num {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-success);
+  transition: color 0.2s ease;
+}
+
+.weight-progress-track {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.weight-progress-fill {
+  height: 100%;
+  background: var(--color-success);
+  border-radius: 99px;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.weight-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* ── Slider rows ── */
+.weight-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.weight-item-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.35rem 0.75rem;
+  align-items: center;
+}
+
+.weight-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  grid-column: 1;
+}
+
+.weight-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.weight-item-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.weight-item-value {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.weight-slider-wrapper {
+  grid-column: 1;
+}
+
+.weight-slider {
+  width: 100%;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  height: 4px;
+}
+
+.weight-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+.weight-number-input {
+  width: 4.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.45rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.weight-number-input:focus {
+  border-color: var(--color-primary);
+}
+
+.weight-pct-sign {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+/* ── Action buttons ── */
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.25rem;
+}
+
+.btn-settings-reset {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-settings-reset:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.btn-settings-save {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.5rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-settings-save:hover    { opacity: 0.88; }
+.btn-settings-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Komponen tambahan card ── */
+.extra-component-card {
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.15s ease;
+}
+
+.extra-component-card:has(input:checked) {
+  border-color: var(--color-primary);
+}
+
+.extra-component-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.extra-component-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.extra-component-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.extra-component-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.extra-component-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.1rem;
+  line-height: 1.4;
+}
+
+.extra-component-body {
+  padding-top: 1rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.extra-weight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.form-label-sm {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.extra-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 2.5rem;
+  height: 1.375rem;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--color-border);
+  border-radius: 99px;
+  transition: background 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--color-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(1.125rem);
+}
+
+/* ── Skala Grade ── */
+.grade-scale-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .grade-scale-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.grade-scale-item {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.grade-scale-chip {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.grade-chip-A { background: rgba(34,197,94,.12);  color: #16a34a; }
+.grade-chip-B { background: rgba(37,99,235,.1);   color: #2563eb; }
+.grade-chip-C { background: rgba(245,158,11,.12); color: #d97706; }
+.grade-chip-D { background: rgba(239,68,68,.1);   color: #dc2626; }
+
+.grade-scale-label {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.grade-scale-auto {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-border);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.4rem;
+}
+
+.grade-scale-hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Formula Preview ── */
+.formula-visual {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+.formula-eq {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.formula-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  padding-top: 0.6rem;
+}
+
+.formula-terms {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.formula-term {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.formula-plus {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.formula-term-box {
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.55rem;
+  border: 1.5px solid;
+  text-align: center;
+  min-width: 6rem;
+}
+
+.formula-term-top {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.formula-term-bottom {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  margin-top: 0.2rem;
+  white-space: nowrap;
+}
+
+.formula-total-check {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+/* Contoh kalkulasi */
+.formula-example {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.formula-example-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.4rem;
+}
+
+.formula-example-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+
+.formula-sim-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.formula-sim-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.formula-sim-result {
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+}
+
+.formula-sim-num {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-left: 0.4rem;
+}
+
+/* grade-chip dipakai ulang dari grades.css */
+.grade-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.grade-chip.A { background: rgba(34,197,94,.12);  color: #16a34a; }
+.grade-chip.B { background: rgba(37,99,235,.1);   color: #2563eb; }
+.grade-chip.C { background: rgba(245,158,11,.12); color: #d97706; }
+.grade-chip.D { background: rgba(239,68,68,.1);   color: #dc2626; }
+
+/* Note box */
+.formula-note-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.875rem 1rem;
+  background: rgba(245,158,11,.07);
+  border: 1px solid rgba(245,158,11,.25);
+  border-radius: 0.65rem;
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  line-height: 1.55;
+}
+
+/* ── Label grup dalam seksi bobot ── */
+.weight-group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Hint teks di bawah label komponen tambahan ── */
+.extra-inline-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ── Mobile override: matikan sticky di nav settings ── */
+@media (max-width: 768px) {
+  .settings-nav {
+    position: static !important;
+    top: auto !important;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem;
+  }
+
+  .settings-nav-item {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 0.3rem;
+    padding: 0.7rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}

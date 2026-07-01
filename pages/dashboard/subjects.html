@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mata Pelajaran — Teacher Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../../assets/css/subjects.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem("tms-theme") || "light";
+      if (t === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+</head>
+<body>
+
+<div class="dashboard-shell" id="dashboard-shell">
+
+  <div id="sidebar-root"></div>
+
+  <div class="dashboard-main">
+    <div id="navbar-root"></div>
+
+    <main class="dashboard-content">
+
+      <!-- ── Page header ── -->
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-xl font-bold">Mata Pelajaran</h2>
+          <p class="text-sm mt-0.5" style="color:var(--color-text-muted)">
+            Kelola semua mata pelajaran yang tersedia di sekolah.
+          </p>
+        </div>
+        <button class="btn-add-subject" id="btn-add-subject">
+          <i data-lucide="plus" style="width:.875rem;height:.875rem"></i>
+          Tambah Mapel
+        </button>
+      </div>
+
+      <!-- ── Stat bar ── -->
+      <div class="subject-stat-bar" id="stat-bar">
+        <!-- Diisi JS -->
+      </div>
+
+      <!-- ── Toolbar ── -->
+      <div class="subjects-toolbar">
+        <div class="search-wrapper">
+          <i data-lucide="search" class="search-icon" style="width:.875rem;height:.875rem"></i>
+          <input
+            type="text"
+            id="search-input"
+            class="subjects-search"
+            placeholder="Cari nama atau kode mapel..."
+          />
+        </div>
+
+        <!-- View toggle: Grid / List -->
+        <div class="view-toggle" id="view-toggle">
+          <button class="view-toggle-btn active" id="btn-view-grid" title="Tampilan Kartu">
+            <i data-lucide="layout-grid" style="width:.875rem;height:.875rem"></i>
+          </button>
+          <button class="view-toggle-btn" id="btn-view-list" title="Tampilan Tabel">
+            <i data-lucide="list" style="width:.875rem;height:.875rem"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Konten utama (diisi JS) ── -->
+      <div id="subjects-container">
+        <!-- Skeleton awal -->
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Tambah / Edit Mata Pelajaran
+     ============================================================ -->
+<div class="modal-overlay" id="subject-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-title">Tambah Mata Pelajaran</h3>
+      <button class="modal-close" id="modal-close">
+        <i data-lucide="x" style="width:.9rem;height:.9rem"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Nama mapel -->
+      <div class="form-group">
+        <label class="form-label">
+          Nama Mata Pelajaran <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="field-name"
+          class="form-input"
+          placeholder="Contoh: Matematika, Fisika, Bahasa Indonesia"
+        />
+        <p class="form-error" id="err-name"></p>
+      </div>
+
+      <!-- Kode mapel -->
+      <div class="form-group">
+        <label class="form-label">
+          Kode Mapel
+          <span class="optional">(opsional)</span>
+        </label>
+        <input
+          type="text"
+          id="field-code"
+          class="form-input"
+          placeholder="Contoh: MTK, FIS, BIN"
+          maxlength="10"
+          style="text-transform: uppercase;"
+        />
+        <p class="form-hint">Kode unik singkat, maks. 10 karakter. Otomatis diubah ke huruf kapital.</p>
+        <p class="form-error" id="err-code"></p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" id="modal-cancel">Batal</button>
+      <button class="btn-modal-save" id="modal-save">
+        <i data-lucide="save" style="width:.8rem;height:.8rem"></i>
+        <span id="modal-save-text">Simpan</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DETAIL DRAWER: Info lengkap mata pelajaran
+     ============================================================ -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<aside class="detail-drawer" id="detail-drawer">
+  <div class="drawer-header">
+    <span class="drawer-title">Detail Mata Pelajaran</span>
+    <button class="drawer-close" id="drawer-close">
+      <i data-lucide="x" style="width:.9rem;height:.9rem"></i>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawer-body">
+    <!-- Diisi JS -->
+  </div>
+</aside>
+
+
+<!-- ============================================================
+     SCRIPT
+     ============================================================ -->
+<script type="module">
+  import { renderSidebar }     from "../../components/sidebar.component.js";
+  import { renderNavbar }      from "../../components/navbar.component.js";
+  import { getCurrentSession } from "../../services/auth.service.js";
+  import {
+    getSubjects,
+    getSubjectById,
+    createSubject,
+    updateSubject,
+    deleteSubject,
+    checkSubjectCodeExists,
+  } from "../../services/subjects.service.js";
+  import { showToast, showConfirm, showError } from "../../utils/notification.util.js";
+  import { qs } from "../../helpers/dom.helper.js";
+  import { getSupabaseClient } from "../../services/supabase.service.js";
+
+  // ── Auth guard ──
+  const session = await getCurrentSession();
+  if (!session) { window.location.href = "../auth/login.html"; }
+
+  const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+  // Cek role dari public.teachers
+  const supabaseForRole = await getSupabaseClient();
+  const { data: myProfile } = await supabaseForRole
+    .from("teachers")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+  const isAdmin = myProfile?.role === "admin";
+
+  await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+  renderNavbar({
+    pageTitle:    "Mata Pelajaran",
+    pageSubtitle: "Manajemen mata pelajaran",
+    userName,
+  });
+
+  // ── Render skeleton awal ──
+  qs("#stat-bar").innerHTML = [...Array(3)].map(() => `
+    <div class="subject-stat-card">
+      <div class="skeleton subject-stat-icon" style="width:2.25rem;height:2.25rem;border-radius:.55rem"></div>
+      <div style="flex:1">
+        <div class="skeleton skeleton-text" style="width:2.5rem"></div>
+        <div class="skeleton skeleton-sub" style="width:4rem"></div>
+      </div>
+    </div>
+  `).join("");
+
+  qs("#subjects-container").innerHTML = `
+    <div class="subjects-grid">
+      ${[...Array(8)].map(() => `
+        <div class="subject-card" style="pointer-events:none">
+          <div class="subject-card-header">
+            <div class="skeleton" style="width:2.5rem;height:2.5rem;border-radius:.65rem"></div>
+          </div>
+          <div class="skeleton skeleton-text" style="width:7rem;margin-bottom:.5rem"></div>
+          <div class="skeleton skeleton-sub" style="width:3rem;margin-bottom:.875rem"></div>
+          <div class="subject-card-divider"></div>
+          <div style="display:flex;justify-content:space-between">
+            <div class="skeleton skeleton-sub" style="width:4rem"></div>
+            <div class="skeleton skeleton-sub" style="width:4rem"></div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  // ── State ──
+  let allSubjects  = [];
+  let filteredList = [];
+  let currentView  = "grid";   // "grid" | "list"
+  let sortCol      = "name";
+  let sortAsc      = true;
+  let editingId    = null;
+
+  // Palet warna berputar untuk kartu & ikon
+  const COLOR_COUNT = 8;
+  function colorIndex(name) {
+    // Hash sederhana dari nama supaya warna konsisten & tidak selalu sama
+    const code = (name || "?").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return code % COLOR_COUNT;
+  }
+
+  // ── Load awal ──
+  allSubjects = await getSubjects();
+  applyFiltersAndRender();
+
+  // ── Filter & Search ──
+  function applyFiltersAndRender() {
+    const search = qs("#search-input").value.trim().toLowerCase();
+
+    filteredList = allSubjects.filter((s) =>
+      !search ||
+      s.name.toLowerCase().includes(search) ||
+      (s.code || "").toLowerCase().includes(search)
+    );
+
+    if (currentView === "list") {
+      filteredList.sort((a, b) => {
+        const va = (a[sortCol] ?? "").toString().toLowerCase();
+        const vb = (b[sortCol] ?? "").toString().toLowerCase();
+        return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+      });
+    }
+
+    renderStatBar();
+    renderContent();
+  }
+
+  let searchTimer;
+  qs("#search-input").addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFiltersAndRender, 250);
+  });
+
+  // ── View toggle ──
+  qs("#btn-view-grid").addEventListener("click", () => {
+    currentView = "grid";
+    qs("#btn-view-grid").classList.add("active");
+    qs("#btn-view-list").classList.remove("active");
+    applyFiltersAndRender();
+  });
+
+  qs("#btn-view-list").addEventListener("click", () => {
+    currentView = "list";
+    qs("#btn-view-list").classList.add("active");
+    qs("#btn-view-grid").classList.remove("active");
+    applyFiltersAndRender();
+  });
+
+  // ── Stat bar ──
+  function renderStatBar() {
+    const total         = allSubjects.length;
+    const totalSchedule = allSubjects.reduce((sum, s) => sum + s.schedule_count, 0);
+    const totalTeachers = new Set(
+      allSubjects.flatMap((s) => s.teacher_ids ?? [])
+    ).size;
+
+    qs("#stat-bar").innerHTML = `
+      <div class="subject-stat-card">
+        <div class="subject-stat-icon" style="background:rgba(37,99,235,.1)">
+          <i data-lucide="book-open" style="width:1rem;height:1rem;color:var(--color-primary)"></i>
+        </div>
+        <div class="subject-stat-info">
+          <div class="subject-stat-value">${total}</div>
+          <div class="subject-stat-label">Total Mapel</div>
+        </div>
+      </div>
+      <div class="subject-stat-card">
+        <div class="subject-stat-icon" style="background:rgba(124,58,237,.1)">
+          <i data-lucide="calendar-days" style="width:1rem;height:1rem;color:#7c3aed"></i>
+        </div>
+        <div class="subject-stat-info">
+          <div class="subject-stat-value">${totalSchedule}</div>
+          <div class="subject-stat-label">Total Sesi</div>
+        </div>
+      </div>
+      <div class="subject-stat-card">
+        <div class="subject-stat-icon" style="background:rgba(16,185,129,.1)">
+          <i data-lucide="graduation-cap" style="width:1rem;height:1rem;color:#059669"></i>
+        </div>
+        <div class="subject-stat-info">
+          <div class="subject-stat-value">${allSubjects.filter(s => s.schedule_count > 0).length}</div>
+          <div class="subject-stat-label">Aktif Diajar</div>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+  }
+
+  // ── Render konten ──
+  function renderContent() {
+    if (currentView === "grid") renderGridView();
+    else renderListView();
+  }
+
+  // ── Grid View ──
+  function renderGridView() {
+    const container = qs("#subjects-container");
+
+    if (filteredList.length === 0) {
+      container.innerHTML = renderEmptyState();
+      lucide.createIcons();
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="subjects-grid">
+        ${filteredList.map((s, idx) => renderSubjectCard(s, idx)).join("")}
+      </div>
+    `;
+
+    lucide.createIcons();
+    bindGridActions();
+  }
+
+  function renderSubjectCard(s, idx) {
+    const ci = colorIndex(s.name);
+    return `
+      <div class="subject-card subject-color-${ci}" data-id="${s.id}">
+        <div class="subject-card-header">
+          <div class="subject-card-icon subject-icon-${ci}">
+            <i data-lucide="book-open" style="width:1.1rem;height:1.1rem"></i>
+          </div>
+          <div class="subject-card-actions">
+            <button class="btn-row-action btn-edit" data-id="${s.id}" title="Edit">
+              <i data-lucide="pencil" style="width:.8rem;height:.8rem"></i>
+            </button>
+            <button class="btn-row-action danger btn-delete" data-id="${s.id}" title="Hapus">
+              <i data-lucide="trash-2" style="width:.8rem;height:.8rem"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="subject-card-name">${s.name}</div>
+        ${s.code
+          ? `<span class="subject-card-code">${s.code}</span>`
+          : `<span class="subject-card-code" style="opacity:.4">Tanpa kode</span>`
+        }
+
+        <div class="subject-card-divider"></div>
+
+        <div class="subject-card-footer">
+          <div class="subject-card-meta">
+            <i data-lucide="calendar-days" style="width:.75rem;height:.75rem"></i>
+            <span>${s.schedule_count} sesi</span>
+          </div>
+          <div class="subject-card-meta">
+            <i data-lucide="users" style="width:.75rem;height:.75rem"></i>
+            <span>${s.teacher_count} guru</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function bindGridActions() {
+    qs("#subjects-container").querySelectorAll(".subject-card[data-id]").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".btn-row-action")) return;
+        openDrawer(card.dataset.id);
+      });
+    });
+
+    document.querySelectorAll(".subject-card .btn-edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => { e.stopPropagation(); openModal("edit", btn.dataset.id); });
+    });
+
+    document.querySelectorAll(".subject-card .btn-delete").forEach((btn) => {
+      btn.addEventListener("click", async (e) => { e.stopPropagation(); await handleDelete(btn.dataset.id); });
+    });
+  }
+
+  // ── List View ──
+  function renderListView() {
+    const container = qs("#subjects-container");
+
+    if (filteredList.length === 0) {
+      container.innerHTML = renderEmptyState();
+      lucide.createIcons();
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="subjects-table-wrapper">
+        <table class="subjects-table">
+          <thead>
+            <tr>
+              <th data-col="name" class="${sortCol === 'name' ? 'sorted' : ''}">
+                Nama Mapel
+                <i data-lucide="chevrons-up-down" style="display:inline;width:.7rem;height:.7rem;vertical-align:middle;margin-left:.2rem"></i>
+              </th>
+              <th data-col="code" class="${sortCol === 'code' ? 'sorted' : ''}">Kode</th>
+              <th>Jumlah Sesi</th>
+              <th>Guru Pengampu</th>
+              <th style="width:6rem">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="subjects-tbody">
+            ${filteredList.map((s, idx) => renderTableRow(s, idx)).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    lucide.createIcons();
+    bindTableActions();
+    bindSortHeaders();
+  }
+
+  function renderTableRow(s, idx) {
+    const ci = colorIndex(s.name);
+    return `
+      <tr data-id="${s.id}">
+        <td>
+          <div class="subject-name-cell">
+            <div class="subject-icon-sm subject-icon-${ci}">
+              <i data-lucide="book-open" style="width:.9rem;height:.9rem"></i>
+            </div>
+            <span class="subject-full-name">${s.name}</span>
+          </div>
+        </td>
+        <td>
+          ${s.code
+            ? `<span class="code-badge">${s.code}</span>`
+            : `<span style="color:var(--color-text-muted);font-size:.75rem">—</span>`
+          }
+        </td>
+        <td style="color:var(--color-text-muted);font-size:.8125rem">
+          <span style="display:flex;align-items:center;gap:.3rem">
+            <i data-lucide="calendar-days" style="width:.75rem;height:.75rem"></i>
+            ${s.schedule_count} sesi
+          </span>
+        </td>
+        <td style="color:var(--color-text-muted);font-size:.8125rem">
+          <span style="display:flex;align-items:center;gap:.3rem">
+            <i data-lucide="users" style="width:.75rem;height:.75rem"></i>
+            ${s.teacher_count} guru
+          </span>
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-row-action btn-detail" data-id="${s.id}" title="Lihat detail">
+              <i data-lucide="eye" style="width:.8rem;height:.8rem"></i>
+            </button>
+            <button class="btn-row-action btn-edit" data-id="${s.id}" title="Edit">
+              <i data-lucide="pencil" style="width:.8rem;height:.8rem"></i>
+            </button>
+            <button class="btn-row-action danger btn-delete" data-id="${s.id}" title="Hapus">
+              <i data-lucide="trash-2" style="width:.8rem;height:.8rem"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function bindTableActions() {
+    qs("#subjects-container").querySelectorAll("tr[data-id]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if (e.target.closest(".row-actions")) return;
+        openDrawer(row.dataset.id);
+      });
+    });
+
+    document.querySelectorAll(".btn-detail").forEach((btn) => {
+      btn.addEventListener("click", (e) => { e.stopPropagation(); openDrawer(btn.dataset.id); });
+    });
+
+    document.querySelectorAll(".subjects-table .btn-edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => { e.stopPropagation(); openModal("edit", btn.dataset.id); });
+    });
+
+    document.querySelectorAll(".subjects-table .btn-delete").forEach((btn) => {
+      btn.addEventListener("click", async (e) => { e.stopPropagation(); await handleDelete(btn.dataset.id); });
+    });
+  }
+
+  function bindSortHeaders() {
+    document.querySelectorAll(".subjects-table thead th[data-col]").forEach((th) => {
+      th.addEventListener("click", () => {
+        const col = th.dataset.col;
+        sortAsc = sortCol === col ? !sortAsc : true;
+        sortCol = col;
+        applyFiltersAndRender();
+      });
+    });
+  }
+
+  // ── Empty state ──
+  function renderEmptyState() {
+    return `
+      <div class="subjects-empty">
+        <i data-lucide="book-open" style="width:2.5rem;height:2.5rem"></i>
+        <p>Belum ada mata pelajaran${qs("#search-input").value ? " yang sesuai pencarian" : ""}.</p>
+      </div>
+    `;
+  }
+
+  // ── Modal Tambah / Edit ──
+  const modal      = qs("#subject-modal");
+  const modalTitle = qs("#modal-title");
+  const saveText   = qs("#modal-save-text");
+  const saveBtn    = qs("#modal-save");
+
+  function openModal(mode, subjectId = null) {
+    editingId = subjectId;
+
+    // Reset form
+    qs("#field-name").value  = "";
+    qs("#field-code").value  = "";
+    qs("#err-name").textContent = "";
+    qs("#err-code").textContent = "";
+    qs("#field-name").classList.remove("is-invalid");
+    qs("#field-code").classList.remove("is-invalid");
+
+    if (mode === "edit" && subjectId) {
+      const s = allSubjects.find((s) => s.id === subjectId);
+      if (!s) return;
+      modalTitle.textContent  = "Edit Mata Pelajaran";
+      saveText.textContent    = "Simpan Perubahan";
+      qs("#field-name").value = s.name;
+      qs("#field-code").value = s.code || "";
+    } else {
+      modalTitle.textContent = "Tambah Mata Pelajaran";
+      saveText.textContent   = "Tambah";
+    }
+
+    modal.classList.add("open");
+    qs("#field-name").focus();
+    lucide.createIcons();
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+    editingId = null;
+  }
+
+  qs("#btn-add-subject").addEventListener("click", () => openModal("add"));
+  qs("#modal-close").addEventListener("click", closeModal);
+  qs("#modal-cancel").addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+  // Auto-uppercase kode mapel saat mengetik
+  qs("#field-code").addEventListener("input", (e) => {
+    const pos = e.target.selectionStart;
+    e.target.value = e.target.value.toUpperCase();
+    e.target.setSelectionRange(pos, pos);
+  });
+
+  // ── Simpan ──
+  saveBtn.addEventListener("click", async () => {
+    const name = qs("#field-name").value.trim();
+    const code = qs("#field-code").value.trim().toUpperCase();
+
+    let valid = true;
+
+    // Validasi nama
+    if (!name) {
+      qs("#err-name").textContent = "Nama mata pelajaran tidak boleh kosong.";
+      qs("#field-name").classList.add("is-invalid");
+      valid = false;
+    } else {
+      qs("#err-name").textContent = "";
+      qs("#field-name").classList.remove("is-invalid");
+    }
+
+    // Validasi kode unik (jika diisi)
+    if (code) {
+      const isDuplicate = await checkSubjectCodeExists(code, editingId);
+      if (isDuplicate) {
+        qs("#err-code").textContent = `Kode "${code}" sudah digunakan mata pelajaran lain.`;
+        qs("#field-code").classList.add("is-invalid");
+        valid = false;
+      } else {
+        qs("#err-code").textContent = "";
+        qs("#field-code").classList.remove("is-invalid");
+      }
+    }
+
+    if (!valid) return;
+
+    saveBtn.disabled     = true;
+    saveText.textContent = "Menyimpan...";
+
+    let result;
+    if (editingId) {
+      result = await updateSubject(editingId, { name, code: code || null });
+      if (!result.success) { showError(result.error); }
+      else { showToast("success", "Mata pelajaran berhasil diperbarui."); }
+    } else {
+      result = await createSubject({ name, code: code || null });
+      if (result.error) { showError(result.error); }
+      else { showToast("success", "Mata pelajaran baru berhasil ditambahkan."); }
+    }
+
+    saveBtn.disabled     = false;
+    saveText.textContent = editingId ? "Simpan Perubahan" : "Tambah";
+
+    if (result.success !== false && !result.error) {
+      closeModal();
+      await refreshSubjects();
+    }
+  });
+
+  // ── Hapus ──
+  async function handleDelete(subjectId) {
+    const s = allSubjects.find((s) => s.id === subjectId);
+
+    const warningText = s?.schedule_count > 0
+      ? `Mapel "${s?.name ?? ""}" masih digunakan di ${s.schedule_count} sesi jadwal. Menghapusnya akan gagal jika masih ada data terkait (jadwal, nilai).`
+      : `Mata pelajaran "${s?.name ?? ""}" akan dihapus secara permanen.`;
+
+    const ok = await showConfirm(`Hapus "${s?.name ?? "mata pelajaran ini"}"?`, warningText);
+    if (!ok) return;
+
+    const { success, error } = await deleteSubject(subjectId);
+
+    if (!success) {
+      // Pesan error FK constraint diterjemahkan ke bahasa yang lebih ramah
+      const friendly = error?.includes("foreign key")
+        ? "Tidak bisa menghapus: mata pelajaran ini masih digunakan di jadwal atau nilai."
+        : error;
+      showError(friendly);
+      return;
+    }
+
+    showToast("success", "Mata pelajaran berhasil dihapus.");
+    await refreshSubjects();
+  }
+
+  // ── Detail Drawer ──
+  const drawer        = qs("#detail-drawer");
+  const drawerOverlay = qs("#drawer-overlay");
+  const drawerBody    = qs("#drawer-body");
+
+  function closeDrawer() {
+    drawer.classList.remove("open");
+    drawerOverlay.classList.remove("open");
+  }
+
+  qs("#drawer-close").addEventListener("click", closeDrawer);
+  drawerOverlay.addEventListener("click", closeDrawer);
+
+  async function openDrawer(subjectId) {
+    // Skeleton sementara fetch
+    drawerBody.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem 0">
+        <div class="skeleton" style="width:4rem;height:4rem;border-radius:1rem"></div>
+        <div class="skeleton skeleton-text" style="width:8rem"></div>
+        <div class="skeleton skeleton-sub" style="width:4rem"></div>
+      </div>
+    `;
+    drawer.classList.add("open");
+    drawerOverlay.classList.add("open");
+
+    const subject = await getSubjectById(subjectId);
+
+    if (!subject) {
+      drawerBody.innerHTML = `<p style="color:var(--color-text-muted);font-size:.875rem;text-align:center;padding:2rem">Data tidak ditemukan.</p>`;
+      return;
+    }
+
+    const ci       = colorIndex(subject.name);
+    const schedules = subject.schedules ?? [];
+
+    // Ambil kelas & guru unik dari daftar schedules
+    const classMap   = {};
+    const teacherMap = {};
+    schedules.forEach((sc) => {
+      if (sc.classes) classMap[sc.classes.id]     = sc.classes;
+      if (sc.teachers) teacherMap[sc.teachers.id] = sc.teachers;
+    });
+    const classes  = Object.values(classMap);
+    const teachers = Object.values(teacherMap);
+
+    drawerBody.innerHTML = `
+      <!-- Header -->
+      <div style="text-align:center;padding-bottom:1rem;border-bottom:1px solid var(--color-border)">
+        <div class="drawer-subject-icon subject-icon-${ci}">
+          <i data-lucide="book-open" style="width:1.75rem;height:1.75rem"></i>
+        </div>
+        <div class="drawer-subject-name">${subject.name}</div>
+        <div class="drawer-subject-code">
+          ${subject.code
+            ? `<span class="code-badge">${subject.code}</span>`
+            : `<span style="font-size:.75rem;color:var(--color-text-muted)">Tanpa kode</span>`
+          }
+        </div>
+      </div>
+
+      <!-- Info umum -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">Informasi</div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Total Sesi Jadwal</span>
+          <span class="drawer-info-value">${schedules.length} sesi</span>
+        </div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Diajarkan di Kelas</span>
+          <span class="drawer-info-value">${classes.length} kelas</span>
+        </div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Guru Pengampu</span>
+          <span class="drawer-info-value">${teachers.length} guru</span>
+        </div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Ditambahkan</span>
+          <span class="drawer-info-value">${
+            new Date(subject.created_at).toLocaleDateString("id-ID", {
+              day: "numeric", month: "short", year: "numeric"
+            })
+          }</span>
+        </div>
+      </div>
+
+      <!-- Kelas yang menggunakan mapel ini -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">
+          Kelas yang Menggunakan
+          <span style="float:right;color:var(--color-text);font-size:.8rem">${classes.length} kelas</span>
+        </div>
+        ${classes.length === 0
+          ? `<p style="font-size:.8125rem;color:var(--color-text-muted)">Belum ada kelas yang menjadwalkan mapel ini.</p>`
+          : `<div class="drawer-class-list">
+              ${classes.map((c) => `
+                <div class="drawer-class-item">
+                  <span class="drawer-class-item-name">${c.name}</span>
+                  <span style="font-size:.7rem;color:var(--color-text-muted);background:var(--color-bg);border:1px solid var(--color-border);padding:.1rem .45rem;border-radius:.3rem;font-weight:600">
+                    Tingkat ${c.grade}
+                  </span>
+                </div>
+              `).join("")}
+            </div>`
+        }
+      </div>
+
+      <!-- Guru yang mengampu -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">
+          Guru Pengampu
+          <span style="float:right;color:var(--color-text);font-size:.8rem">${teachers.length} guru</span>
+        </div>
+        ${teachers.length === 0
+          ? `<p style="font-size:.8125rem;color:var(--color-text-muted)">Belum ada guru yang mengampu mapel ini.</p>`
+          : `<div class="drawer-class-list">
+              ${teachers.map((t) => `
+                <div class="drawer-class-item">
+                  <span class="drawer-class-item-name">${t.full_name}</span>
+                </div>
+              `).join("")}
+            </div>`
+        }
+      </div>
+
+      <!-- Tombol aksi -->
+      <div style="display:flex;gap:.5rem;margin-top:1.5rem">
+        <button
+          onclick="document.getElementById('detail-drawer').classList.remove('open');document.getElementById('drawer-overlay').classList.remove('open');"
+          style="flex:1;padding:.55rem;border-radius:.55rem;border:1.5px solid var(--color-border);background:transparent;font-size:.8125rem;font-weight:600;cursor:pointer;color:var(--color-text-muted);font-family:inherit"
+        >
+          Tutup
+        </button>
+        <button
+          id="drawer-edit-btn"
+          data-id="${subject.id}"
+          style="flex:1;padding:.55rem;border-radius:.55rem;background:var(--color-primary);color:white;font-size:.8125rem;font-weight:600;border:none;cursor:pointer;font-family:inherit"
+        >
+          Edit Mapel
+        </button>
+      </div>
+    `;
+
+    lucide.createIcons();
+
+    qs("#drawer-edit-btn")?.addEventListener("click", () => {
+      closeDrawer();
+      openModal("edit", subject.id);
+    });
+  }
+
+  // ── Refresh ──
+  async function refreshSubjects() {
+    allSubjects = await getSubjects();
+    applyFiltersAndRender();
+  }
+</script>
+
+</body>
+</html>

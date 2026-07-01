@@ -1,0 +1,249 @@
+/* ============================================================
+   DASHBOARD LAYOUT CSS
+   ============================================================
+   Berisi style untuk kerangka dashboard: sidebar, navbar, dan
+   area konten utama. Dipakai oleh semua halaman dashboard lewat
+   layouts/dashboard-layout.js.
+   ============================================================ */
+
+:root {
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 76px;
+  --navbar-height: 64px;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  transition: width 0.25s ease, transform 0.25s ease;
+}
+
+.app-shell.is-collapsed .app-sidebar {
+  width: var(--sidebar-width-collapsed);
+}
+
+.sidebar-brand {
+  height: var(--navbar-height);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
+.sidebar-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 0.9rem 0.75rem 0.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.app-shell.is-collapsed .sidebar-section-label,
+.app-shell.is-collapsed .sidebar-link-label,
+.app-shell.is-collapsed .sidebar-brand-text {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.sidebar-link.is-active {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar-link-label {
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-collapse-btn {
+  border-top: 1px solid var(--color-border);
+  height: var(--navbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-collapse-btn:hover {
+  background-color: var(--color-bg);
+}
+
+.app-shell.is-collapsed .sidebar-collapse-btn svg {
+  transform: rotate(180deg);
+}
+
+/* ---------- Navbar ---------- */
+.app-navbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: var(--sidebar-width);
+  height: var(--navbar-height);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  z-index: 30;
+  transition: left 0.25s ease;
+}
+
+.app-shell.is-collapsed .app-navbar {
+  left: var(--sidebar-width-collapsed);
+}
+
+/* ---------- Main Content ---------- */
+.app-main {
+  margin-left: var(--sidebar-width);
+  padding-top: var(--navbar-height);
+  min-height: 100vh;
+  transition: margin-left 0.25s ease;
+}
+
+.app-shell.is-collapsed .app-main {
+  margin-left: var(--sidebar-width-collapsed);
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 1023px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-width);
+  }
+  .app-shell.is-mobile-open .app-sidebar {
+    transform: translateX(0);
+  }
+  .app-navbar,
+  .app-main {
+    left: 0;
+    margin-left: 0;
+  }
+  .sidebar-collapse-btn { display: none; }
+}
+
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 35;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.app-shell.is-mobile-open .mobile-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------- Profile Dropdown ---------- */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  padding: 0.4rem;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+
+.dropdown-menu.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-bg);
+}
+
+.dropdown-item svg { width: 16px; height: 16px; }
+
+/* Notification dot */
+.notif-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-danger);
+  border: 1.5px solid var(--color-surface);
+}

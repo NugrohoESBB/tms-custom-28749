@@ -1,0 +1,780 @@
+/* ============================================================
+   CLASSES CSS
+   ============================================================
+   Style khusus untuk halaman classes.html.
+   Berisi:
+   1. Stat bar (total kelas, total siswa, per tingkat).
+   2. Toolbar pencarian & filter tingkat.
+   3. Grid kartu kelas (card view).
+   4. Tabel kelas (list/table view).
+   5. Modal tambah/edit kelas.
+   6. Detail drawer kelas (daftar siswa, wali kelas).
+   7. Empty state & skeleton.
+   ============================================================ */
+
+/* ── Stat bar ── */
+.class-stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) { .class-stat-bar { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .class-stat-bar { grid-template-columns: 1fr 1fr; } }
+
+.class-stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.class-stat-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.class-stat-info { min-width: 0; }
+
+.class-stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.class-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.2rem;
+}
+
+/* ── Toolbar ── */
+.classes-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.classes-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.55rem 0.875rem 0.55rem 2.25rem;
+  border-radius: 0.6rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.classes-search:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.classes-filter-select {
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.classes-filter-select:focus { border-color: var(--color-primary); }
+
+/* View toggle (Grid / List) */
+.view-toggle {
+  display: flex;
+  gap: 0.2rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.55rem;
+  padding: 0.2rem;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 1.75rem;
+  border-radius: 0.38rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-toggle-btn.active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.btn-add-class {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-add-class:hover { opacity: 0.88; }
+
+/* ── Badge tingkat (grade) ── */
+.grade-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.grade-badge.X   { background: rgba(37,99,235,.1);   color: var(--color-primary); }
+.grade-badge.XI  { background: rgba(124,58,237,.1);  color: #7c3aed; }
+.grade-badge.XII { background: rgba(16,185,129,.1);  color: #059669; }
+.grade-badge.other { background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+
+/* ── GRID VIEW: kartu kelas ── */
+.classes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.class-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  padding: 1.1rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Garis warna atas berdasarkan tingkat */
+.class-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.class-card.grade-X::before   { background: var(--color-primary); }
+.class-card.grade-XI::before  { background: #7c3aed; }
+.class-card.grade-XII::before { background: #059669; }
+.class-card.grade-other::before { background: var(--color-border); }
+
+.class-card:hover {
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+}
+
+.class-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.class-card-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.class-card.grade-X    .class-card-icon { background: rgba(37,99,235,.1); color: var(--color-primary); }
+.class-card.grade-XI   .class-card-icon { background: rgba(124,58,237,.1); color: #7c3aed; }
+.class-card.grade-XII  .class-card-icon { background: rgba(16,185,129,.1); color: #059669; }
+.class-card.grade-other .class-card-icon { background: var(--color-bg); color: var(--color-text-muted); }
+
+.class-card-actions {
+  display: flex;
+  gap: 0.3rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.class-card:hover .class-card-actions { opacity: 1; }
+
+.class-card-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
+}
+
+.class-card-grade {
+  margin-bottom: 0.875rem;
+}
+
+/* Divider tipis */
+.class-card-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0.75rem 0;
+}
+
+/* Info footer kartu: jumlah siswa, wali kelas */
+.class-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.class-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.class-card-homeroom {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-align: right;
+  max-width: 9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── LIST/TABLE VIEW ── */
+.classes-table-wrapper {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.classes-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+.classes-table thead th {
+  background: var(--color-bg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.classes-table thead th:hover  { color: var(--color-text); }
+.classes-table thead th.sorted { color: var(--color-primary); }
+
+.classes-table tbody tr {
+  background: var(--color-surface);
+  transition: background-color 0.1s ease;
+  cursor: pointer;
+}
+
+.classes-table tbody tr:hover { background: var(--color-bg); }
+.classes-table tbody tr + tr  { border-top: 1px solid var(--color-border); }
+
+.classes-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.class-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.class-icon-sm {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.class-full-name {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Tombol aksi per baris ── */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.classes-table tbody tr:hover .row-actions { opacity: 1; }
+
+.btn-row-action {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-row-action:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+.btn-row-action.danger:hover {
+  background: rgba(239, 68, 68, .1);
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, .3);
+}
+
+/* ── Modal Tambah / Edit Kelas ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(3px);
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background: var(--color-surface);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.2s ease;
+  overflow: hidden;
+}
+
+.modal-overlay.open .modal-box {
+  transform: translateY(0) scale(1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.modal-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  transition: background-color 0.15s ease;
+}
+
+.modal-close:hover { background: var(--color-bg); }
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.modal-body::-webkit-scrollbar { width: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
+.modal-footer {
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Form di modal ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+@media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } }
+
+.form-group { margin-bottom: 1rem; }
+.form-group:last-child { margin-bottom: 0; }
+
+.form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.4rem;
+}
+
+.form-label .required { color: var(--color-danger); margin-left: 2px; }
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.6rem 0.875rem;
+  border-radius: 0.55rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-input.is-invalid { border-color: var(--color-danger); }
+.form-error { font-size: 0.72rem; color: var(--color-danger); margin-top: 0.25rem; min-height: 1rem; }
+
+/* Tombol footer modal */
+.btn-modal-cancel {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-modal-cancel:hover { background: var(--color-bg); color: var(--color-text); }
+
+.btn-modal-save {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.5rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-modal-save:hover    { opacity: 0.88; }
+.btn-modal-save:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Detail Drawer ── */
+.detail-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 380px;
+  max-width: 90vw;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.12);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+
+.detail-drawer.open { transform: translateX(0); }
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.3);
+  z-index: 85;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.drawer-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.drawer-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  transition: background-color 0.15s ease;
+}
+
+.drawer-close:hover { background: var(--color-bg); }
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.drawer-body::-webkit-scrollbar { width: 4px; }
+.drawer-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
+/* Header kelas di drawer */
+.drawer-class-header {
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drawer-class-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+}
+
+.drawer-class-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.drawer-class-grade {
+  margin-top: 0.35rem;
+}
+
+/* Section di dalam drawer */
+.drawer-section {
+  margin-top: 1.25rem;
+}
+
+.drawer-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drawer-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0;
+  font-size: 0.8125rem;
+}
+
+.drawer-info-label { color: var(--color-text-muted); }
+.drawer-info-value { font-weight: 600; color: var(--color-text); text-align: right; }
+
+/* Daftar siswa di drawer */
+.drawer-student-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.drawer-student-list::-webkit-scrollbar { width: 3px; }
+.drawer-student-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+
+.drawer-student-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+  font-size: 0.8125rem;
+}
+
+.drawer-student-avatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.drawer-student-name { font-weight: 600; color: var(--color-text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-student-nis  { font-size: 0.7rem; color: var(--color-text-muted); flex-shrink: 0; }
+
+/* ── Empty state ── */
+.classes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 4rem 1rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.classes-empty svg { opacity: 0.3; }
+.classes-empty p   { font-size: 0.875rem; max-width: 20rem; }
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-bg) 50%,
+    var(--color-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 0.4rem;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text { height: 0.875rem; }
+.skeleton-sub  { height: 0.7rem; margin-top: 0.3rem; }

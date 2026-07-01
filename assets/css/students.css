@@ -1,0 +1,723 @@
+/* ============================================================
+   STUDENTS CSS
+   ============================================================
+   Style khusus untuk halaman students.html.
+   Berisi:
+   1. Toolbar pencarian & filter.
+   2. Stat bar ringkasan (total, aktif, L/P).
+   3. Tabel siswa dengan avatar inisial & badge status.
+   4. Modal tambah/edit siswa.
+   5. Detail drawer siswa (ringkasan kehadiran, kelas).
+   6. Empty state.
+   ============================================================ */
+
+/* ── Stat bar (ringkasan angka di atas tabel) ── */
+.student-stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) { .student-stat-bar { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .student-stat-bar { grid-template-columns: 1fr 1fr; } }
+
+.student-stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.student-stat-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.student-stat-info { min-width: 0; }
+
+.student-stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.student-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.2rem;
+}
+
+/* ── Toolbar (search + filter + tombol tambah) ── */
+.students-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.students-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.55rem 0.875rem 0.55rem 2.25rem;
+  border-radius: 0.6rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.students-search:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.students-filter-select {
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.students-filter-select:focus { border-color: var(--color-primary); }
+
+.btn-add-student {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-add-student:hover { opacity: 0.88; }
+
+/* ── Tabel Siswa ── */
+.students-table-wrapper {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.students-table thead th {
+  background: var(--color-bg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.students-table thead th:hover { color: var(--color-text); }
+
+.students-table thead th.sorted { color: var(--color-primary); }
+
+.students-table tbody tr {
+  background: var(--color-surface);
+  transition: background-color 0.1s ease;
+}
+
+.students-table tbody tr:hover { background: var(--color-bg); }
+
+.students-table tbody tr + tr { border-top: 1px solid var(--color-border); }
+
+.students-table td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+/* ── Avatar inisial ── */
+.student-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.student-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.student-name-info { min-width: 0; }
+
+.student-full-name {
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 14rem;
+}
+
+.student-nis {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 0.1rem;
+}
+
+/* ── Badge gender ── */
+.gender-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.gender-badge.L { background: rgba(37,99,235,.1);  color: var(--color-primary); }
+.gender-badge.P { background: rgba(236,72,153,.1); color: #db2777; }
+
+/* ── Badge status aktif/nonaktif ── */
+.active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.active-badge.aktif    { background: rgba(34,197,94,.1);  color: var(--color-success); }
+.active-badge.nonaktif { background: rgba(239,68,68,.1);  color: var(--color-danger); }
+
+.active-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.active-badge.aktif    .active-dot { background: var(--color-success); }
+.active-badge.nonaktif .active-dot { background: var(--color-danger); }
+
+/* ── Badge kelas ── */
+.class-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+/* ── Tombol aksi per baris ── */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.students-table tbody tr:hover .row-actions { opacity: 1; }
+
+.btn-row-action {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-row-action:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+.btn-row-action.danger:hover {
+  background: rgba(239,68,68,.1);
+  color: var(--color-danger);
+  border-color: rgba(239,68,68,.3);
+}
+
+/* ── Modal Tambah / Edit Siswa ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(3px);
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background: var(--color-surface);
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.2s ease;
+  overflow: hidden;
+}
+
+.modal-overlay.open .modal-box {
+  transform: translateY(0) scale(1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.modal-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s ease;
+  background: none;
+  border: none;
+}
+
+.modal-close:hover { background: var(--color-bg); }
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.modal-body::-webkit-scrollbar { width: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
+.modal-footer {
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ── Form di modal ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+@media (max-width: 420px) { .form-row { grid-template-columns: 1fr; } }
+
+.form-group { margin-bottom: 1rem; }
+.form-group:last-child { margin-bottom: 0; }
+
+.form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.4rem;
+}
+
+.form-label .required { color: var(--color-danger); margin-left: 2px; }
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.6rem 0.875rem;
+  border-radius: 0.55rem;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-input.is-invalid { border-color: var(--color-danger); }
+.form-error { font-size: 0.72rem; color: var(--color-danger); margin-top: 0.25rem; min-height: 1rem; }
+
+/* ── Tombol footer modal ── */
+.btn-modal-cancel {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-modal-cancel:hover { background: var(--color-bg); color: var(--color-text); }
+
+.btn-modal-save {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.5rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+  font-family: inherit;
+  position: relative;
+}
+
+.btn-modal-save:hover    { opacity: 0.88; }
+.btn-modal-save:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Detail Drawer (panel samping kanan) ── */
+.detail-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 360px;
+  max-width: 90vw;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.12);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+
+.detail-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.3);
+  z-index: 85;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.drawer-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.drawer-close {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  transition: background-color 0.15s ease;
+}
+
+.drawer-close:hover { background: var(--color-bg); }
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.drawer-body::-webkit-scrollbar { width: 4px; }
+.drawer-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
+/* Avatar besar di detail drawer */
+.drawer-avatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 auto 0.75rem;
+}
+
+.drawer-student-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.drawer-student-nis {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: 0.2rem;
+}
+
+/* Section di dalam drawer */
+.drawer-section {
+  margin-top: 1.25rem;
+}
+
+.drawer-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drawer-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0;
+  font-size: 0.8125rem;
+}
+
+.drawer-info-label { color: var(--color-text-muted); }
+.drawer-info-value { font-weight: 600; color: var(--color-text); text-align: right; }
+
+/* Attendance summary di drawer */
+.attendance-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.attendance-mini-card {
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.attendance-mini-num {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.attendance-mini-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+
+.attendance-mini-card.hadir .attendance-mini-label { color: var(--color-success); }
+.attendance-mini-card.izin  .attendance-mini-label { color: var(--color-primary); }
+.attendance-mini-card.sakit .attendance-mini-label { color: var(--color-warning); }
+.attendance-mini-card.alpha .attendance-mini-label { color: var(--color-danger); }
+
+/* ── Empty state ── */
+.students-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 4rem 1rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.students-empty svg { opacity: 0.3; }
+.students-empty p   { font-size: 0.875rem; max-width: 20rem; }
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-bg) 50%,
+    var(--color-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 0.4rem;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-avatar { width: 2.25rem; height: 2.25rem; border-radius: 50%; flex-shrink: 0; }
+.skeleton-text   { height: 0.875rem; }
+.skeleton-sub    { height: 0.7rem; margin-top: 0.3rem; }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pagination-btns {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.page-btn {
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.45rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0 0.5rem;
+}
+
+.page-btn:hover   { background: var(--color-bg); color: var(--color-text); }
+.page-btn.active  { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }

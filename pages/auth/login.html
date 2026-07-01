@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Masuk — Teacher Management System</title>
+
+  <!-- TailwindCSS via CDN: tanpa build step, cocok untuk project tanpa Node.js -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SweetAlert2: notifikasi sukses/error setelah submit form -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Lucide Icons: icon mail, lock, eye, dst -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- AOS: animasi reveal halus saat elemen muncul -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans — dipilih karena geometris,
+       modern, dan mudah dibaca di ukuran kecil (form field) — gaya
+       yang sering dipakai produk seperti Linear/Stripe. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/auth.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="auth-shell fade-in">
+
+  <!-- ============================================================
+       PANEL KIRI — Brand & Signature Element
+       ============================================================ -->
+  <div class="auth-brand-panel flex-col justify-between p-12" data-aos="fade-right" data-aos-duration="600">
+    <div class="schedule-grid" aria-hidden="true">
+      <!-- 80 titik (8x10) dibuat otomatis lewat JS di bawah, bukan ditulis manual satu-satu -->
+    </div>
+
+    <div class="relative z-10">
+      <div class="flex items-center gap-2">
+        <i data-lucide="graduation-cap" class="w-7 h-7"></i>
+        <span class="text-lg font-bold">TMS</span>
+      </div>
+    </div>
+
+    <div class="relative z-10 max-w-md">
+      <h1 class="text-3xl font-extrabold leading-snug mb-3">
+        Satu dasbor, untuk semua hal yang guru kelola setiap hari.
+      </h1>
+      <p class="text-sm text-blue-100/90">
+        Jadwal, kehadiran, nilai, dan tugas — tersusun rapi di satu tempat,
+        bukan tersebar di banyak buku catatan.
+      </p>
+    </div>
+
+    <p class="relative z-10 text-xs text-blue-100/70">
+      © 2026 Teacher Management System
+    </p>
+  </div>
+
+  <!-- ============================================================
+       PANEL KANAN — Form Login
+       ============================================================ -->
+  <div class="flex items-center justify-center p-6 sm:p-12" style="background-color: var(--color-bg)">
+    <div class="w-full max-w-sm" data-aos="fade-up" data-aos-duration="500">
+
+      <div class="lg:hidden flex items-center gap-2 mb-8">
+        <i data-lucide="graduation-cap" class="w-6 h-6" style="color: var(--color-primary)"></i>
+        <span class="text-base font-bold">TMS</span>
+      </div>
+
+      <h2 class="text-2xl font-bold mb-1">Selamat datang kembali</h2>
+      <p class="text-sm mb-8" style="color: var(--color-text-muted)">
+        Masuk untuk melanjutkan ke dasbor kamu.
+      </p>
+
+      <form id="login-form" novalidate>
+        <!-- Email -->
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-medium mb-1.5">Email</label>
+          <div class="auth-input-group">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="auth-input"
+              placeholder="nama@sekolah.sch.id"
+              autocomplete="email"
+            />
+          </div>
+          <p class="auth-error-text" id="email-error"></p>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="password" class="block text-sm font-medium">Password</label>
+          </div>
+          <div class="auth-input-group">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="auth-input pr-10"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+            <i data-lucide="eye" class="w-4 h-4 auth-toggle-password" id="toggle-password"></i>
+          </div>
+          <p class="auth-error-text" id="password-error"></p>
+        </div>
+
+        <!-- Remember me -->
+        <label class="flex items-center gap-2 mb-6 cursor-pointer select-none">
+          <input type="checkbox" id="remember-me" class="rounded" style="accent-color: var(--color-primary)" />
+          <span class="text-sm" style="color: var(--color-text-muted)">Ingat saya di perangkat ini</span>
+        </label>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          id="login-submit"
+          class="relative w-full py-2.5 rounded-lg text-white font-semibold text-sm transition active:scale-[0.98]"
+          style="background-color: var(--color-primary)"
+        >
+          <span class="btn-text">Masuk</span>
+          <span class="btn-spinner"></span>
+        </button>
+      </form>
+
+      <p class="text-sm text-center mt-6" style="color: var(--color-text-muted)">
+        Belum punya akun?
+        <a href="./register.html" class="font-semibold" style="color: var(--color-primary)">Daftar di sini</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module" src="./login.js"></script>
+  <script>
+    // Generate 80 titik untuk schedule-grid (lebih ringkas daripada menulis manual)
+    const grid = document.querySelector('.schedule-grid');
+    for (let i = 0; i < 80; i++) {
+      const dot = document.createElement('span');
+      dot.style.animationDelay = `${(i % 10) * 0.3}s`;
+      grid.appendChild(dot);
+    }
+
+    lucide.createIcons();
+    AOS.init();
+  </script>
+</body>
+</html>

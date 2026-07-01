@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="id">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Pengaturan — Teacher Management System</title>
+
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+		<link rel="stylesheet" href="../../assets/css/main.css" />
+		<link rel="stylesheet" href="../../assets/css/dashboard.css" />
+		<link rel="stylesheet" href="../../assets/css/settings.css" />
+
+		<style>
+			body {
+				font-family: "Plus Jakarta Sans", sans-serif;
+			}
+		</style>
+
+		<script>
+			(function () {
+				const t = localStorage.getItem("tms-theme") || "light";
+				if (t === "dark") document.documentElement.classList.add("dark");
+			})();
+		</script>
+	</head>
+	<body>
+		<div class="dashboard-shell" id="dashboard-shell">
+			<div id="sidebar-root"></div>
+
+			<div class="dashboard-main">
+				<div id="navbar-root"></div>
+
+				<main class="dashboard-content">
+					<!-- Page Header -->
+					<div class="mb-6">
+						<h2 class="text-xl font-bold">Pengaturan</h2>
+						<p class="text-sm mt-0.5" style="color: var(--color-text-muted)">Konfigurasi bobot nilai, formula nilai akhir, dan skala grade.</p>
+					</div>
+
+					<div class="settings-layout">
+						<!-- ══════════════════════════════════
+             SIDEBAR NAVIGASI PENGATURAN
+             ══════════════════════════════════ -->
+						<nav class="settings-nav">
+							<button class="settings-nav-item active" data-section="bobot">
+								<i data-lucide="sliders-horizontal" style="width: 1rem; height: 1rem"></i>
+								Bobot Nilai
+							</button>
+							<button class="settings-nav-item" data-section="grade">
+								<i data-lucide="award" style="width: 1rem; height: 1rem"></i>
+								Skala Grade
+							</button>
+							<button class="settings-nav-item" data-section="formula">
+								<i data-lucide="function-square" style="width: 1rem; height: 1rem"></i>
+								Preview Formula
+							</button>
+							<button class="settings-nav-item" data-section="tingkat">
+								<i data-lucide="layers" style="width: 1rem; height: 1rem"></i>
+								Tingkat Kelas
+							</button>
+						</nav>
+
+						<!-- ══════════════════════════════════
+             KONTEN PENGATURAN
+             ══════════════════════════════════ -->
+						<div class="settings-content">
+							<!-- ── SEKSI: Bobot Nilai ── -->
+							<section class="settings-section active" id="section-bobot">
+								<div class="settings-section-header">
+									<h3 class="settings-section-title">Bobot Nilai</h3>
+									<p class="settings-section-desc">Atur persentase bobot untuk setiap komponen nilai. Aktifkan komponen tambahan (kehadiran/bonus) — bobot komponen utama akan <strong>berkurang otomatis</strong> secara proporsional agar total tetap 100%.</p>
+								</div>
+
+								<!-- Total indicator -->
+								<div class="weight-total-bar">
+									<div class="weight-total-label">
+										Total semua bobot:
+										<span id="total-weight-display" class="weight-total-num">100%</span>
+									</div>
+									<div class="weight-progress-track">
+										<div class="weight-progress-fill" id="weight-progress-fill" style="width: 100%"></div>
+									</div>
+								</div>
+
+								<p class="weight-warning" id="bobot-warning" style="display: none; margin-bottom: 1rem">
+									<i data-lucide="alert-triangle" style="width: 0.8rem; height: 0.8rem"></i>
+									Total semua bobot harus tepat 100%. Saat ini: <span id="bobot-warning-num"></span>%
+								</p>
+
+								<!-- ── Komponen Utama ── -->
+								<div class="weight-group-label">Komponen Utama</div>
+								<div class="weight-sliders" id="main-sliders">
+									<div class="weight-item-row" data-key="tugas">
+										<div class="weight-item-header">
+											<span class="weight-dot" style="background: #2563eb"></span>
+											<span class="weight-item-label">Tugas</span>
+											<span class="weight-item-value" id="val-tugas">20%</span>
+										</div>
+										<div class="weight-slider-wrapper">
+											<input type="range" class="weight-slider" id="slider-tugas" min="0" max="100" step="1" value="20" oninput="onSliderChange('tugas', this.value)" />
+										</div>
+										<div class="weight-input-group">
+											<input type="number" class="weight-number-input" id="num-tugas" min="0" max="100" step="1" value="20" oninput="onNumberChange('tugas', this.value)" />
+											<span class="weight-pct-sign">%</span>
+										</div>
+									</div>
+
+									<div class="weight-item-row" data-key="ulangan">
+										<div class="weight-item-header">
+											<span class="weight-dot" style="background: #f59e0b"></span>
+											<span class="weight-item-label">Ulangan Harian</span>
+											<span class="weight-item-value" id="val-ulangan">30%</span>
+										</div>
+										<div class="weight-slider-wrapper">
+											<input type="range" class="weight-slider" id="slider-ulangan" min="0" max="100" step="1" value="30" oninput="onSliderChange('ulangan', this.value)" />
+										</div>
+										<div class="weight-input-group">
+											<input type="number" class="weight-number-input" id="num-ulangan" min="0" max="100" step="1" value="30" oninput="onNumberChange('ulangan', this.value)" />
+											<span class="weight-pct-sign">%</span>
+										</div>
+									</div>
+
+									<div class="weight-item-row" data-key="uts">
+										<div class="weight-item-header">
+											<span class="weight-dot" style="background: #7c3aed"></span>
+											<span class="weight-item-label">UTS</span>
+											<span class="weight-item-value" id="val-uts">20%</span>
+										</div>
+										<div class="weight-slider-wrapper">
+											<input type="range" class="weight-slider" id="slider-uts" min="0" max="100" step="1" value="20" oninput="onSliderChange('uts', this.value)" />
+										</div>
+										<div class="weight-input-group">
+											<input type="number" class="weight-number-input" id="num-uts" min="0" max="100" step="1" value="20" oninput="onNumberChange('uts', this.value)" />
+											<span class="weight-pct-sign">%</span>
+										</div>
+									</div>
+
+									<div class="weight-item-row" data-key="uas">
+										<div class="weight-item-header">
+											<span class="weight-dot" style="background: #22c55e"></span>
+											<span class="weight-item-label">UAS</span>
+											<span class="weight-item-value" id="val-uas">30%</span>
+										</div>
+										<div class="weight-slider-wrapper">
+											<input type="range" class="weight-slider" id="slider-uas" min="0" max="100" step="1" value="30" oninput="onSliderChange('uas', this.value)" />
+										</div>
+										<div class="weight-input-group">
+											<input type="number" class="weight-number-input" id="num-uas" min="0" max="100" step="1" value="30" oninput="onNumberChange('uas', this.value)" />
+											<span class="weight-pct-sign">%</span>
+										</div>
+									</div>
+								</div>
+								<!-- /main-sliders -->
+
+								<!-- ── Komponen Tambahan (inline) ── -->
+								<div class="weight-group-label" style="margin-top: 1.25rem">Komponen Tambahan</div>
+								<p class="extra-inline-hint">Aktifkan komponen di bawah — bobot Tugas, Ulangan, UTS, UAS akan berkurang secara proporsional otomatis.</p>
+
+								<!-- Kehadiran -->
+								<div class="extra-component-card" id="card-kehadiran">
+									<div class="extra-component-header">
+										<div class="extra-component-info">
+											<div class="extra-component-icon" style="background: rgba(34, 197, 94, 0.1); color: #16a34a">
+												<i data-lucide="user-check" style="width: 1rem; height: 1rem"></i>
+											</div>
+											<div>
+												<div class="extra-component-title">Kehadiran</div>
+												<div class="extra-component-desc">Persentase hadir siswa ikut diperhitungkan dalam nilai akhir.</div>
+											</div>
+										</div>
+										<div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0">
+											<div class="weight-input-group" id="input-kehadiran" style="display: none">
+												<input type="number" class="weight-number-input" id="num-kehadiran" min="5" max="30" step="5" value="10" oninput="onExtraWeightChange('kehadiran', this.value)" />
+												<span class="weight-pct-sign">%</span>
+											</div>
+											<label class="toggle-switch">
+												<input type="checkbox" id="toggle-kehadiran" onchange="onExtraToggle('kehadiran')" />
+												<span class="toggle-slider"></span>
+											</label>
+										</div>
+									</div>
+									<p class="extra-note" id="note-kehadiran" style="display: none; margin-top: 0.6rem">
+										<i data-lucide="info" style="width: 0.75rem; height: 0.75rem"></i>
+										Nilai kehadiran = (jumlah hadir ÷ total pertemuan) × 100, lalu dikalikan bobotnya.
+									</p>
+								</div>
+
+								<!-- Bonus -->
+								<div class="extra-component-card" id="card-bonus">
+									<div class="extra-component-header">
+										<div class="extra-component-info">
+											<div class="extra-component-icon" style="background: rgba(245, 158, 11, 0.1); color: #d97706">
+												<i data-lucide="star" style="width: 1rem; height: 1rem"></i>
+											</div>
+											<div>
+												<div class="extra-component-title">Nilai Tambahan / Bonus</div>
+												<div class="extra-component-desc">Poin bonus dari partisipasi, lomba, atau prestasi siswa.</div>
+											</div>
+										</div>
+										<div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0">
+											<div class="weight-input-group" id="input-bonus" style="display: none">
+												<input type="number" class="weight-number-input" id="num-bonus" min="5" max="20" step="5" value="5" oninput="onExtraWeightChange('bonus', this.value)" />
+												<span class="weight-pct-sign">%</span>
+											</div>
+											<label class="toggle-switch">
+												<input type="checkbox" id="toggle-bonus" onchange="onExtraToggle('bonus')" />
+												<span class="toggle-slider"></span>
+											</label>
+										</div>
+									</div>
+									<p class="extra-note" id="note-bonus" style="display: none; margin-top: 0.6rem">
+										<i data-lucide="info" style="width: 0.75rem; height: 0.75rem"></i>
+										Nilai bonus diinput di halaman Nilai pada assignment bertipe "bonus".
+									</p>
+								</div>
+
+								<div class="settings-actions">
+									<button class="btn-settings-reset" onclick="resetBobot()">
+										<i data-lucide="rotate-ccw" style="width: 0.8rem; height: 0.8rem"></i>
+										Reset ke Default
+									</button>
+									<button class="btn-settings-save" id="btn-save-bobot" onclick="saveBobot()">
+										<i data-lucide="save" style="width: 0.875rem; height: 0.875rem"></i>
+										Simpan Bobot
+									</button>
+								</div>
+							</section>
+
+							<!-- ── SEKSI: Skala Grade ── -->
+							<section class="settings-section" id="section-grade">
+								<div class="settings-section-header">
+									<h3 class="settings-section-title">Skala Grade</h3>
+									<p class="settings-section-desc">Tentukan batas nilai minimum untuk setiap grade huruf. Nilai di bawah batas D otomatis mendapat grade D.</p>
+								</div>
+
+								<div class="grade-scale-grid">
+									<div class="grade-scale-item">
+										<div class="grade-scale-chip grade-chip-A">A</div>
+										<div class="grade-scale-label">Minimal nilai</div>
+										<div class="weight-input-group">
+											<input type="number" class="weight-number-input" id="grade-A" min="1" max="100" step="1" value="85" oninput="validateGradeScales()" />
+										</div>
+										<div class="grade-scale-hint" id="hint-A">85 – 100</div>
+									</div>
+
+									<div class="grade-scale-item">
+										<div class="grade-scale-chip grade-chip-B">B</div>
+										<div class="grade-scale-label">Minimal nilai</div>
+										<div class="weight-input-group">
+											<input type="number" class="weight-number-input" id="grade-B" min="1" max="100" step="1" value="70" oninput="validateGradeScales()" />
+										</div>
+										<div class="grade-scale-hint" id="hint-B">70 – 84</div>
+									</div>
+
+									<div class="grade-scale-item">
+										<div class="grade-scale-chip grade-chip-C">C</div>
+										<div class="grade-scale-label">Minimal nilai</div>
+										<div class="weight-input-group">
+											<input type="number" class="weight-number-input" id="grade-C" min="1" max="100" step="1" value="55" oninput="validateGradeScales()" />
+										</div>
+										<div class="grade-scale-hint" id="hint-C">55 – 69</div>
+									</div>
+
+									<div class="grade-scale-item">
+										<div class="grade-scale-chip grade-chip-D">D</div>
+										<div class="grade-scale-label">Di bawah C</div>
+										<div class="grade-scale-auto">Otomatis</div>
+										<div class="grade-scale-hint" id="hint-D">0 – 54</div>
+									</div>
+								</div>
+
+								<p id="grade-scale-error" class="weight-warning" style="display: none; margin-top: 0.75rem">
+									<i data-lucide="alert-triangle" style="width: 0.8rem; height: 0.8rem"></i>
+									Batas A harus lebih besar dari B, dan B lebih besar dari C.
+								</p>
+
+								<div class="settings-actions">
+									<button class="btn-settings-reset" onclick="resetGrade()">
+										<i data-lucide="rotate-ccw" style="width: 0.8rem; height: 0.8rem"></i>
+										Reset ke Default
+									</button>
+									<button class="btn-settings-save" id="btn-save-grade" onclick="saveGrade()">
+										<i data-lucide="save" style="width: 0.875rem; height: 0.875rem"></i>
+										Simpan Skala Grade
+									</button>
+								</div>
+							</section>
+
+							<!-- ── SEKSI: Preview Formula ── -->
+							<section class="settings-section" id="section-formula">
+								<div class="settings-section-header">
+									<h3 class="settings-section-title">Preview Formula Nilai Akhir</h3>
+									<p class="settings-section-desc">Begini cara nilai akhir siswa dihitung berdasarkan pengaturan yang aktif saat ini.</p>
+								</div>
+
+								<!-- Formula visual -->
+								<div class="formula-visual" id="formula-visual">
+									<!-- Diisi JS -->
+								</div>
+
+								<!-- Contoh kalkulasi -->
+								<div class="formula-example">
+									<div class="formula-example-title">
+										<i data-lucide="calculator" style="width: 0.9rem; height: 0.9rem"></i>
+										Contoh Perhitungan
+									</div>
+									<div class="formula-example-desc">Masukkan nilai contoh untuk melihat hasil kalkulasi nilai akhir:</div>
+
+									<div class="formula-sim-grid" id="formula-sim-grid">
+										<!-- Diisi JS -->
+									</div>
+
+									<div class="formula-sim-result">
+										Nilai Akhir: <span id="sim-result" class="formula-sim-num">—</span>
+										<span id="sim-grade" class="grade-chip" style="margin-left: 0.5rem">—</span>
+									</div>
+								</div>
+
+								<!-- Catatan -->
+								<div class="formula-note-box">
+									<i data-lucide="lightbulb" style="width: 1rem; height: 1rem; color: var(--color-warning); flex-shrink: 0"></i>
+									<div><strong>Catatan:</strong> Perubahan bobot hanya berlaku untuk perhitungan nilai akhir di halaman Rekap. Data nilai mentah (skor per tugas/ujian) tidak berubah. Kamu bisa ubah bobot kapan saja dan rekap akan otomatis menyesuaikan.</div>
+								</div>
+							</section>
+
+							<!-- ── SEKSI: Tingkat Kelas ── -->
+							<section class="settings-section" id="section-tingkat">
+								<div class="settings-section-header">
+									<h3 class="settings-section-title">Tingkat Kelas</h3>
+									<p class="settings-section-desc">Atur daftar tingkat kelas yang tersedia saat membuat atau mengedit kelas. Contoh: X, XI, XII untuk SMA; 7, 8, 9 untuk SMP; atau nama lain sesuai sekolah.</p>
+								</div>
+
+								<!-- Daftar tingkat yang sudah ada -->
+								<div id="grade-list" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem">
+									<!-- Diisi oleh JS -->
+								</div>
+
+								<!-- Form tambah tingkat baru -->
+								<div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem">
+									<input type="text" id="input-new-grade" class="weight-number-input" placeholder="Contoh: XIII" maxlength="10" style="width: 8rem; text-align: left; padding-left: 0.75rem" onkeydown="if (event.key === 'Enter') addClassGrade();" />
+									<button onclick="addClassGrade()" class="btn-settings-save" style="padding: 0.45rem 0.9rem">
+										<i data-lucide="plus" style="width: 0.8rem; height: 0.8rem"></i>
+										Tambah
+									</button>
+								</div>
+
+								<div class="settings-actions">
+									<button class="btn-settings-reset" onclick="resetClassGrades()">
+										<i data-lucide="rotate-ccw" style="width: 0.8rem; height: 0.8rem"></i>
+										Reset ke Default
+									</button>
+									<button class="btn-settings-save" onclick="saveClassGrades()">
+										<i data-lucide="save" style="width: 0.8rem; height: 0.8rem"></i>
+										Simpan
+									</button>
+								</div>
+							</section>
+						</div>
+						<!-- /settings-content -->
+					</div>
+					<!-- /settings-layout -->
+				</main>
+			</div>
+		</div>
+
+		<script type="module">
+			import { renderSidebar } from "../../components/sidebar.component.js";
+			import { renderNavbar } from "../../components/navbar.component.js";
+			import { getCurrentSession } from "../../services/auth.service.js";
+			import { getSupabaseClient } from "../../services/supabase.service.js";
+
+			// ── Guard ──
+			const session = await getCurrentSession();
+			if (!session) window.location.href = "../auth/login.html";
+
+			const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+			// Cek role dari public.teachers
+			const supabaseForRole = await getSupabaseClient();
+			const { data: myProfile } = await supabaseForRole.from("teachers").select("role").eq("id", session.user.id).single();
+			const isAdmin = myProfile?.role === "admin";
+
+			await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+			renderNavbar({ pageTitle: "Pengaturan", pageSubtitle: "Konfigurasi sistem penilaian", userName });
+
+			lucide.createIcons();
+			initSettings();
+		</script>
+
+		<script>
+			/* ============================================================
+     STORAGE KEYS — konsisten dengan grades.service.js
+     ============================================================ */
+			const STORAGE_BOBOT = "tms-grade-weights";
+			const STORAGE_KOMPONEN = "tms-grade-extras";
+			const STORAGE_GRADE_SCALE = "tms-grade-scale";
+			const STORAGE_CLASS_GRADES = "tms-class-grades";
+
+			const DEFAULT_BOBOT = { tugas: 20, ulangan: 30, uts: 20, uas: 30 };
+			const DEFAULT_GRADE = { A: 85, B: 70, C: 55 };
+			const DEFAULT_CLASS_GRADES = ["X", "XI", "XII"];
+			const DEFAULT_EXTRA = { kehadiran: { active: false, weight: 10 }, bonus: { active: false, weight: 5 } };
+
+			/* ── State ── */
+			let _bobot = { ...DEFAULT_BOBOT };
+			let _extra = JSON.parse(JSON.stringify(DEFAULT_EXTRA));
+			let _grade = { ...DEFAULT_GRADE };
+			let _classGrades = [...DEFAULT_CLASS_GRADES];
+
+			/* ============================================================
+     INIT
+     ============================================================ */
+			function initSettings() {
+				// Muat dari localStorage
+				try {
+					const saved = JSON.parse(localStorage.getItem(STORAGE_BOBOT));
+					if (saved) _bobot = saved;
+				} catch (_) {}
+
+				try {
+					const saved = JSON.parse(localStorage.getItem(STORAGE_KOMPONEN));
+					if (saved) _extra = saved;
+				} catch (_) {}
+
+				try {
+					const saved = JSON.parse(localStorage.getItem(STORAGE_GRADE_SCALE));
+					if (saved) _grade = saved;
+				} catch (_) {}
+
+				applyBobotToUI();
+				applyExtraToUI();
+				applyGradeToUI();
+				try {
+					const savedGrades = JSON.parse(localStorage.getItem(STORAGE_CLASS_GRADES));
+					if (Array.isArray(savedGrades) && savedGrades.length > 0) _classGrades = savedGrades;
+				} catch (_) {}
+				applyClassGradesToUI();
+				updateTotalWeight();
+				renderFormula();
+				renderSimGrid();
+
+				// Nav
+				document.querySelectorAll(".settings-nav-item").forEach((btn) => {
+					btn.addEventListener("click", () => {
+						const sec = btn.dataset.section;
+						document.querySelectorAll(".settings-nav-item").forEach((b) => b.classList.remove("active"));
+						document.querySelectorAll(".settings-section").forEach((s) => s.classList.remove("active"));
+						btn.classList.add("active");
+						document.getElementById(`section-${sec}`).classList.add("active");
+						if (sec === "formula") {
+							renderFormula();
+							renderSimGrid();
+						}
+						lucide.createIcons();
+					});
+				});
+			}
+
+			/* ============================================================
+   BOBOT + KOMPONEN TAMBAHAN (digabung)
+   ============================================================ */
+
+			// Bobot utama "mentah" yang diset guru (selalu total 100 sebelum extra)
+			// _bobot ini adalah proporsi relatif antar komponen utama.
+			// Bobot efektif = _bobot[key] * (100 - totalExtra) / 100
+
+			function applyBobotToUI() {
+				["tugas", "ulangan", "uts", "uas"].forEach((k) => {
+					document.getElementById(`slider-${k}`).value = _bobot[k];
+					document.getElementById(`num-${k}`).value = _bobot[k];
+					document.getElementById(`val-${k}`).textContent = `${_bobot[k]}%`;
+				});
+				applyExtraToUI();
+				updateTotalWeight();
+			}
+
+			function applyExtraToUI() {
+				Object.keys(_extra).forEach((k) => {
+					document.getElementById(`toggle-${k}`).checked = _extra[k].active;
+					document.getElementById(`num-${k}`).value = _extra[k].weight;
+					document.getElementById(`input-${k}`).style.display = _extra[k].active ? "flex" : "none";
+					document.getElementById(`note-${k}`).style.display = _extra[k].active ? "flex" : "none";
+					document.getElementById(`card-${k}`).style.borderColor = _extra[k].active ? "var(--color-primary)" : "";
+				});
+				scaleMainWeights();
+			}
+
+			/**
+			 * scaleMainWeights
+			 * Hitung bobot efektif komponen utama setelah dikurangi extra,
+			 * lalu update tampilan slider & angka (read-only saat ada extra aktif).
+			 */
+			function scaleMainWeights() {
+				const totalExtra = getActiveTotalExtra();
+				const hasExtra = totalExtra > 0;
+
+				["tugas", "ulangan", "uts", "uas"].forEach((k) => {
+					// Tampilkan bobot langsung tanpa scaling
+					document.getElementById(`val-${k}`).textContent = `${_bobot[k]}%`;
+
+					// Kunci slider kalau ada extra aktif (supaya guru tahu harus adjust manual)
+					document.getElementById(`slider-${k}`).disabled = false; // tetap bisa diedit
+					document.getElementById(`num-${k}`).readOnly = false;
+					document.getElementById(`slider-${k}`).style.opacity = "1";
+					document.getElementById(`num-${k}`).style.opacity = "1";
+				});
+
+				updateTotalWeight();
+			}
+
+			function getActiveTotalExtra() {
+				return Object.values(_extra)
+					.filter((e) => e.active)
+					.reduce((a, e) => a + e.weight, 0);
+			}
+
+			function updateTotalWeight() {
+				const totalMain = Object.values(_bobot).reduce((a, b) => a + b, 0);
+				const totalExtra = getActiveTotalExtra();
+				const grandTotal = totalMain + totalExtra;
+
+				const display = document.getElementById("total-weight-display");
+				const fill = document.getElementById("weight-progress-fill");
+
+				display.textContent = `${grandTotal}%`;
+				display.style.color = grandTotal === 100 ? "var(--color-success)" : "var(--color-danger)";
+				fill.style.width = `${Math.min(grandTotal, 100)}%`;
+				fill.style.background = grandTotal === 100 ? "var(--color-success)" : "var(--color-danger)";
+
+				// Peringatan & disable tombol simpan kalau belum 100
+				const warningNum = document.getElementById("bobot-warning-num");
+				if (warningNum) warningNum.textContent = grandTotal;
+
+				const warning = document.getElementById("bobot-warning");
+				if (warning) warning.style.display = grandTotal === 100 ? "none" : "flex";
+				document.getElementById("btn-save-bobot").disabled = grandTotal !== 100;
+			}
+
+			window.onSliderChange = (key, val) => {
+				_bobot[key] = Number(val);
+				document.getElementById(`num-${key}`).value = val;
+				scaleMainWeights();
+			};
+
+			window.onNumberChange = (key, val) => {
+				_bobot[key] = Number(val);
+				document.getElementById(`slider-${key}`).value = val;
+				scaleMainWeights();
+			};
+
+			window.onExtraToggle = (key) => {
+				_extra[key].active = document.getElementById(`toggle-${key}`).checked;
+				document.getElementById(`input-${key}`).style.display = _extra[key].active ? "flex" : "none";
+				document.getElementById(`note-${key}`).style.display = _extra[key].active ? "flex" : "none";
+				document.getElementById(`card-${key}`).style.borderColor = _extra[key].active ? "var(--color-primary)" : "";
+				scaleMainWeights();
+				updateTotalWeight();
+				lucide.createIcons();
+			};
+
+			window.onExtraWeightChange = (key, val) => {
+				_extra[key].weight = Number(val);
+				scaleMainWeights();
+				updateTotalWeight();
+			};
+
+			window.saveBobot = () => {
+				// Simpan bobot mentah (proporsi relatif) + extra
+				localStorage.setItem(STORAGE_BOBOT, JSON.stringify(_bobot));
+				localStorage.setItem(STORAGE_KOMPONEN, JSON.stringify(_extra));
+				Swal.fire({
+					toast: true,
+					position: "top-end",
+					icon: "success",
+					title: "Bobot nilai disimpan!",
+					showConfirmButton: false,
+					timer: 2000,
+					timerProgressBar: true,
+				});
+			};
+
+			window.resetBobot = () => {
+				_bobot = { ...DEFAULT_BOBOT };
+				_extra = JSON.parse(JSON.stringify(DEFAULT_EXTRA));
+				applyBobotToUI();
+			};
+
+			/* ============================================================
+     SKALA GRADE
+     ============================================================ */
+			function applyGradeToUI() {
+				document.getElementById("grade-A").value = _grade.A;
+				document.getElementById("grade-B").value = _grade.B;
+				document.getElementById("grade-C").value = _grade.C;
+				updateGradeHints();
+			}
+
+			function updateGradeHints() {
+				const A = Number(document.getElementById("grade-A").value);
+				const B = Number(document.getElementById("grade-B").value);
+				const C = Number(document.getElementById("grade-C").value);
+				document.getElementById("hint-A").textContent = `${A} – 100`;
+				document.getElementById("hint-B").textContent = `${B} – ${A - 1}`;
+				document.getElementById("hint-C").textContent = `${C} – ${B - 1}`;
+				document.getElementById("hint-D").textContent = `0 – ${C - 1}`;
+			}
+
+			window.validateGradeScales = () => {
+				const A = Number(document.getElementById("grade-A").value);
+				const B = Number(document.getElementById("grade-B").value);
+				const C = Number(document.getElementById("grade-C").value);
+
+				const ok = A > B && B > C && C > 0;
+				document.getElementById("grade-scale-error").style.display = ok ? "none" : "flex";
+				document.getElementById("btn-save-grade").disabled = !ok;
+
+				if (ok) {
+					_grade = { A, B, C };
+					updateGradeHints();
+				}
+				lucide.createIcons();
+			};
+
+			window.saveGrade = () => {
+				localStorage.setItem(STORAGE_GRADE_SCALE, JSON.stringify(_grade));
+				Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Skala grade disimpan!", showConfirmButton: false, timer: 2000, timerProgressBar: true });
+			};
+
+			window.resetGrade = () => {
+				_grade = { ...DEFAULT_GRADE };
+				applyGradeToUI();
+				document.getElementById("grade-scale-error").style.display = "none";
+				document.getElementById("btn-save-grade").disabled = false;
+			};
+
+			/* ============================================================
+   TINGKAT KELAS
+   ============================================================ */
+			function applyClassGradesToUI() {
+				const list = document.getElementById("grade-list");
+				if (!list) return;
+
+				if (_classGrades.length === 0) {
+					list.innerHTML = `<p style="font-size:.8125rem;color:var(--color-text-muted)">Belum ada tingkat. Tambahkan di bawah.</p>`;
+					return;
+				}
+
+				list.innerHTML = _classGrades
+					.map(
+						(g, i) => `
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;background:var(--color-bg);border:1px solid var(--color-border);border-radius:.55rem">
+      <i data-lucide="grip-vertical" style="width:.9rem;height:.9rem;color:var(--color-text-muted)"></i>
+      <span style="flex:1;font-size:.875rem;font-weight:600;color:var(--color-text)">${g}</span>
+      <button
+        onclick="removeClassGrade(${i})"
+        style="display:flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:.35rem;border:none;background:rgba(239,68,68,.1);color:var(--color-danger);cursor:pointer"
+        title="Hapus"
+      >
+        <i data-lucide="x" style="width:.75rem;height:.75rem"></i>
+      </button>
+    </div>
+  `,
+					)
+					.join("");
+
+				lucide.createIcons();
+			}
+
+			window.addClassGrade = function () {
+				const input = document.getElementById("input-new-grade");
+				const val = input.value.trim().toUpperCase();
+
+				if (!val) return;
+				if (_classGrades.includes(val)) {
+					Swal.fire({ toast: true, position: "top-end", icon: "warning", title: `Tingkat "${val}" sudah ada.`, showConfirmButton: false, timer: 2000 });
+					return;
+				}
+
+				_classGrades.push(val);
+				input.value = "";
+				applyClassGradesToUI();
+			};
+
+			window.removeClassGrade = function (index) {
+				_classGrades.splice(index, 1);
+				applyClassGradesToUI();
+			};
+
+			window.saveClassGrades = function () {
+				if (_classGrades.length === 0) {
+					Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Minimal harus ada satu tingkat.", showConfirmButton: false, timer: 2000 });
+					return;
+				}
+				localStorage.setItem(STORAGE_CLASS_GRADES, JSON.stringify(_classGrades));
+				Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Daftar tingkat disimpan!", showConfirmButton: false, timer: 2000, timerProgressBar: true });
+			};
+
+			window.resetClassGrades = function () {
+				_classGrades = [...DEFAULT_CLASS_GRADES];
+				applyClassGradesToUI();
+			};
+
+			/* ============================================================
+     PREVIEW FORMULA
+     ============================================================ */
+			function buildFormulaTerms() {
+				const LABELS = { tugas: "Tugas", ulangan: "Ulangan Harian", uts: "UTS", uas: "UAS" };
+				const COLORS = { tugas: "#2563eb", ulangan: "#f59e0b", uts: "#7c3aed", uas: "#22c55e" };
+
+				// Komponen utama: pakai bobot apa adanya (guru sudah set proporsional sendiri)
+				const terms = Object.entries(_bobot).map(([k, w]) => ({
+					key: k,
+					label: LABELS[k],
+					color: COLORS[k],
+					effectiveWeight: w, // ← langsung pakai, tidak perlu di-scale lagi
+				}));
+
+				if (_extra.kehadiran.active) {
+					terms.push({ key: "kehadiran", label: "Kehadiran", color: "#16a34a", effectiveWeight: _extra.kehadiran.weight });
+				}
+				if (_extra.bonus.active) {
+					terms.push({ key: "bonus", label: "Bonus", color: "#d97706", effectiveWeight: _extra.bonus.weight });
+				}
+
+				return terms;
+			}
+
+			function renderFormula() {
+				const terms = buildFormulaTerms();
+				const container = document.getElementById("formula-visual");
+				container.innerHTML = `
+      <div class="formula-eq">
+        <span class="formula-label">Nilai Akhir =</span>
+        <div class="formula-terms">
+          ${terms
+				.map(
+					(t, i) => `
+            <div class="formula-term">
+              ${i > 0 ? '<span class="formula-plus">+</span>' : ""}
+              <div class="formula-term-box" style="border-color:${t.color}20;background:${t.color}08">
+                <div class="formula-term-top" style="color:${t.color}">${t.effectiveWeight}%</div>
+                <div class="formula-term-bottom">× rata-rata ${t.label}</div>
+              </div>
+            </div>
+          `,
+				)
+				.join("")}
+        </div>
+      </div>
+      <div class="formula-total-check">
+        Total: ${terms.reduce((a, t) => a + t.effectiveWeight, 0).toFixed(1)}%
+      </div>
+    `;
+			}
+
+			function renderSimGrid() {
+				const terms = buildFormulaTerms();
+				const grid = document.getElementById("formula-sim-grid");
+
+				grid.innerHTML = terms
+					.map(
+						(t) => `
+      <div class="formula-sim-item">
+        <label class="form-label-sm" style="color:${t.color}">${t.label} <span style="color:var(--color-text-muted);font-weight:500">(${t.effectiveWeight}%)</span></label>
+        <input type="number" class="weight-number-input sim-input"
+          data-key="${t.key}" data-weight="${t.effectiveWeight}"
+          min="0" max="100" step="1" placeholder="—"
+          oninput="calcSim()" style="width:5.5rem" />
+      </div>
+    `,
+					)
+					.join("");
+
+				document.getElementById("sim-result").textContent = "—";
+				document.getElementById("sim-grade").textContent = "—";
+				document.getElementById("sim-grade").className = "grade-chip";
+			}
+
+			window.calcSim = () => {
+				const inputs = document.querySelectorAll(".sim-input");
+				let totalW = 0,
+					weightedSum = 0;
+				inputs.forEach((inp) => {
+					const val = parseFloat(inp.value);
+					if (inp.value === "" || isNaN(val)) return;
+					const w = parseFloat(inp.dataset.weight);
+					weightedSum += val * w;
+					totalW += w;
+				});
+
+				if (totalW === 0) {
+					document.getElementById("sim-result").textContent = "—";
+					document.getElementById("sim-grade").textContent = "—";
+					return;
+				}
+
+				// Skala ke 100% kalau ada input yang kosong
+				const result = Math.round((weightedSum / totalW) * 10) / 10;
+				const grade = calcGrade(result);
+
+				document.getElementById("sim-result").textContent = result;
+				const gradeEl = document.getElementById("sim-grade");
+				gradeEl.textContent = grade;
+				gradeEl.className = `grade-chip ${grade}`;
+			};
+
+			function calcGrade(score) {
+				if (score == null) return "—";
+				if (score >= _grade.A) return "A";
+				if (score >= _grade.B) return "B";
+				if (score >= _grade.C) return "C";
+				return "D";
+			}
+
+			window.initSettings = initSettings;
+		</script>
+	</body>
+</html>

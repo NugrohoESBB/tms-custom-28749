@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nilai — Teacher Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!--
+    SheetJS (XLSX): untuk export Excel.
+    Dipilih karena support penuh di browser tanpa server-side,
+    dan bisa generate .xlsx dengan format tabel yang rapi.
+  -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../../assets/css/grades.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-bg) 50%,
+        var(--color-border) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 0.4rem;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem("tms-theme") || "light";
+      if (t === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+</head>
+<body>
+
+<div class="dashboard-shell" id="dashboard-shell">
+  <div id="sidebar-root"></div>
+
+  <div class="dashboard-main">
+    <div id="navbar-root"></div>
+
+    <main class="dashboard-content">
+
+      <!-- Page Header -->
+      <div class="mb-5">
+        <h2 class="text-xl font-bold">Nilai Siswa</h2>
+        <p class="text-sm mt-0.5" style="color:var(--color-text-muted)">
+          Kelola tugas, ujian, dan lihat rekap nilai per kelas.
+        </p>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-input" onclick="switchTab('input')">
+          <i data-lucide="pencil-line" style="width:.9rem;height:.9rem"></i>
+          Input Nilai
+        </button>
+        <button class="tab-btn" id="tab-rekap" onclick="switchTab('rekap')">
+          <i data-lucide="table-2" style="width:.9rem;height:.9rem"></i>
+          Rekap Nilai
+        </button>
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           TAB 1: INPUT NILAI
+           ══════════════════════════════════════════════ -->
+      <div id="panel-input" class="tab-panel active">
+
+        <!-- Filter bar: pilih kelas & mapel -->
+        <div class="grade-filter-bar">
+          <select id="input-class" class="grade-select" onchange="onClassChange()">
+            <option value="">— Pilih Kelas —</option>
+          </select>
+          <select id="input-subject" class="grade-select" onchange="loadAssignments()" disabled>
+            <option value="">Semua Mapel</option>
+          </select>
+          <div style="flex:1"></div>
+          <!-- Tombol tambah assignment -->
+          <button class="btn-add-assignment" onclick="openAddModal()" id="btn-add" style="display:none">
+            <i data-lucide="plus" style="width:.85rem;height:.85rem"></i>
+            Tambah Tugas/Ujian
+          </button>
+        </div>
+
+        <!-- Skeleton old -->
+        <!-- <div id="input-skeleton" style="display:none">
+          ${Array(4).fill(0).map(() => `
+          <div class="assignment-card" style="cursor:default;margin-bottom:.6rem">
+            <div class="skeleton" style="width:2.25rem;height:2.25rem;border-radius:.5rem;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:1rem;width:60%;margin-bottom:.4rem"></div>
+              <div class="skeleton" style="height:.75rem;width:40%"></div>
+            </div>
+            <div class="skeleton" style="height:1.5rem;width:4rem;border-radius:99px"></div>
+          </div>
+          `).join("")}
+        </div> -->
+        
+        <!-- Skeleton -->
+        <div id="input-skeleton" style="display:none">
+          <div class="assignment-card" style="cursor:default;margin-bottom:.6rem">
+            <div class="skeleton" style="width:2.25rem;height:2.25rem;border-radius:.5rem;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:1rem;width:60%;margin-bottom:.4rem"></div>
+              <div class="skeleton" style="height:.75rem;width:40%"></div>
+            </div>
+            <div class="skeleton" style="height:1.5rem;width:4rem;border-radius:99px"></div>
+          </div>
+          <div class="assignment-card" style="cursor:default;margin-bottom:.6rem">
+            <div class="skeleton" style="width:2.25rem;height:2.25rem;border-radius:.5rem;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:1rem;width:60%;margin-bottom:.4rem"></div>
+              <div class="skeleton" style="height:.75rem;width:40%"></div>
+            </div>
+            <div class="skeleton" style="height:1.5rem;width:4rem;border-radius:99px"></div>
+          </div>
+          <div class="assignment-card" style="cursor:default;margin-bottom:.6rem">
+            <div class="skeleton" style="width:2.25rem;height:2.25rem;border-radius:.5rem;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:1rem;width:60%;margin-bottom:.4rem"></div>
+              <div class="skeleton" style="height:.75rem;width:40%"></div>
+            </div>
+            <div class="skeleton" style="height:1.5rem;width:4rem;border-radius:99px"></div>
+          </div>
+          <div class="assignment-card" style="cursor:default;margin-bottom:.6rem">
+            <div class="skeleton" style="width:2.25rem;height:2.25rem;border-radius:.5rem;flex-shrink:0"></div>
+            <div style="flex:1">
+              <div class="skeleton" style="height:1rem;width:60%;margin-bottom:.4rem"></div>
+              <div class="skeleton" style="height:.75rem;width:40%"></div>
+            </div>
+            <div class="skeleton" style="height:1.5rem;width:4rem;border-radius:99px"></div>
+          </div>
+        </div>
+
+        <!-- Pilih kelas dulu -->
+        <div id="input-empty-class">
+          <div class="grades-empty card-soft">
+            <i data-lucide="layers" style="width:2.5rem;height:2.5rem"></i>
+            <p>Pilih kelas terlebih dahulu untuk melihat daftar tugas dan ujian.</p>
+          </div>
+        </div>
+
+        <!-- Daftar assignment -->
+        <div id="assignment-list-container" style="display:none">
+
+          <!-- Info bobot nilai -->
+          <div class="weight-bar" id="weight-bar">
+            <span style="font-weight:700;color:var(--color-text);margin-right:.25rem">Bobot:</span>
+            <!-- Diisi JS -->
+          </div>
+
+          <div class="assignment-list" id="assignment-list">
+            <!-- Diisi JS -->
+          </div>
+        </div>
+
+        <!-- Tidak ada assignment -->
+        <div id="input-no-assignment" style="display:none">
+          <div class="grades-empty card-soft">
+            <i data-lucide="file-x" style="width:2.5rem;height:2.5rem"></i>
+            <p>Belum ada tugas atau ujian untuk kelas ini.</p>
+            <p style="font-size:.75rem">Klik tombol "Tambah Tugas/Ujian" untuk mulai.</p>
+          </div>
+        </div>
+
+      </div><!-- /panel-input -->
+
+
+      <!-- ══════════════════════════════════════════════
+           TAB 2: REKAP NILAI
+           ══════════════════════════════════════════════ -->
+      <div id="panel-rekap" class="tab-panel">
+
+        <!-- Filter bar rekap -->
+        <div class="grade-filter-bar">
+          <select id="rekap-class" class="grade-select" onchange="onRekapClassChange()">
+            <option value="">— Pilih Kelas —</option>
+          </select>
+          <select id="rekap-subject" class="grade-select" onchange="loadRekap()" disabled>
+            <option value="">Semua Mapel</option>
+          </select>
+          <div style="flex:1"></div>
+          <!-- Export buttons -->
+          <button
+            onclick="exportExcel()"
+            id="btn-export-excel"
+            style="display:none"
+            class="btn-add-assignment"
+            style="background:var(--color-success)"
+          >
+            <i data-lucide="file-spreadsheet" style="width:.85rem;height:.85rem"></i>
+            Export Excel
+          </button>
+        </div>
+
+        <!-- Pilih kelas dulu -->
+        <div id="rekap-empty-class">
+          <div class="grades-empty card-soft">
+            <i data-lucide="layers" style="width:2.5rem;height:2.5rem"></i>
+            <p>Pilih kelas untuk melihat rekap nilai.</p>
+          </div>
+        </div>
+
+        <!-- Skeleton rekap old -->
+        <!-- <div id="rekap-skeleton" style="display:none">
+          <div class="grade-stat-cards">
+            ${Array(4).fill(0).map(() => `
+              <div class="grade-stat-card">
+                <div class="skeleton" style="height:.7rem;width:5rem;margin-bottom:.5rem"></div>
+                <div class="skeleton" style="height:1.75rem;width:3.5rem"></div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="rekap-wrapper">
+            <table class="rekap-table">
+              <thead><tr>
+                ${Array(7).fill(0).map(() => `<th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>`).join("")}
+              </tr></thead>
+              <tbody>
+                ${Array(6).fill(0).map(() => `
+                  <tr>${Array(7).fill(0).map(() => `
+                    <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  `).join("")}</tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div> -->
+
+        <!-- Skeleton rekap -->
+        <div id="rekap-skeleton" style="display:none">
+          <div class="grade-stat-cards">
+            <div class="grade-stat-card">
+              <div class="skeleton" style="height:.7rem;width:5rem;margin-bottom:.5rem"></div>
+              <div class="skeleton" style="height:1.75rem;width:3.5rem"></div>
+            </div>
+            <div class="grade-stat-card">
+              <div class="skeleton" style="height:.7rem;width:5rem;margin-bottom:.5rem"></div>
+              <div class="skeleton" style="height:1.75rem;width:3.5rem"></div>
+            </div>
+            <div class="grade-stat-card">
+              <div class="skeleton" style="height:.7rem;width:5rem;margin-bottom:.5rem"></div>
+              <div class="skeleton" style="height:1.75rem;width:3.5rem"></div>
+            </div>
+            <div class="grade-stat-card">
+              <div class="skeleton" style="height:.7rem;width:5rem;margin-bottom:.5rem"></div>
+              <div class="skeleton" style="height:1.75rem;width:3.5rem"></div>
+            </div>
+          </div>
+          <div class="rekap-wrapper">
+            <table class="rekap-table">
+              <thead><tr>
+                <th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>
+                <th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>
+                <th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>
+                <th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>
+                <th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>
+                <th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>
+                <th><div class="skeleton" style="height:.75rem;width:4rem"></div></th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:4rem"></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Rekap table -->
+        <div id="rekap-container" style="display:none">
+
+          <!-- Stat cards -->
+          <div class="grade-stat-cards" id="rekap-stats">
+            <!-- Diisi JS -->
+          </div>
+
+          <!-- Tabel rekap -->
+          <div class="rekap-wrapper">
+            <table class="rekap-table" id="rekap-table">
+              <thead id="rekap-thead"><!-- Diisi JS --></thead>
+              <tbody id="rekap-tbody"><!-- Diisi JS --></tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Tidak ada data -->
+        <div id="rekap-no-data" style="display:none">
+          <div class="grades-empty card-soft">
+            <i data-lucide="file-x" style="width:2.5rem;height:2.5rem"></i>
+            <p>Belum ada nilai yang dicatat untuk kelas ini.</p>
+          </div>
+        </div>
+
+      </div><!-- /panel-rekap -->
+
+    </main>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     MODAL: Tambah Tugas/Ujian
+     ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Tambah Tugas / Ujian</span>
+      <button class="modal-close" onclick="closeAddModal()">
+        <i data-lucide="x" style="width:1rem;height:1rem"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Judul <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" id="add-title" class="form-input" placeholder="Contoh: Ulangan Harian Bab 3" maxlength="100" />
+        <p id="add-title-error" style="font-size:.75rem;color:var(--color-danger);min-height:.9rem;margin-top:.2rem"></p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="form-group">
+          <label class="form-label">Kategori <span style="color:var(--color-danger)">*</span></label>
+          <select id="add-category" class="form-select">
+            <option value="tugas">Tugas</option>
+            <option value="ulangan">Ulangan Harian</option>
+            <option value="uts">UTS</option>
+            <option value="uas">UAS</option>
+            <option value="bonus">Nilai Bonus</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nilai Maksimal</label>
+          <input type="number" id="add-max-score" class="form-input" value="100" min="1" max="1000" />
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="form-group">
+          <label class="form-label">Tanggal Tugas</label>
+          <input type="date" id="add-date" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Batas Pengumpulan</label>
+          <input type="date" id="add-due" class="form-input" />
+        </div>
+      </div>
+
+      <div class="form-group" id="add-subject-group">
+        <label class="form-label">Mata Pelajaran</label>
+        <select id="add-subject-select" class="form-select">
+          <option value="">— Pilih Mapel —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Deskripsi</label>
+        <textarea id="add-desc" class="form-textarea" placeholder="Keterangan tugas/ujian (opsional)" maxlength="500"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeAddModal()">Batal</button>
+      <button class="btn-modal-save" id="btn-add-save" onclick="submitAddAssignment()">
+        <i data-lucide="check" style="width:.875rem;height:.875rem"></i>
+        Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     MODAL: Input Nilai Siswa
+     ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-scores">
+  <div class="modal-box" style="max-width:620px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="score-modal-title">Input Nilai</div>
+        <div style="font-size:.75rem;color:var(--color-text-muted);margin-top:.15rem" id="score-modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeScoreModal()">
+        <i data-lucide="x" style="width:1rem;height:1rem"></i>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:0">
+
+      <!-- Search -->
+      <div style="padding:.75rem 1.25rem;border-bottom:1px solid var(--color-border)">
+        <input
+          type="search"
+          id="score-search"
+          placeholder="Cari nama siswa..."
+          oninput="filterScoreRows(this.value)"
+          style="width:100%;padding:.5rem .875rem;border-radius:.5rem;border:1.5px solid var(--color-border);background:var(--color-bg);color:var(--color-text);font-size:.8125rem;outline:none;font-family:inherit"
+        />
+      </div>
+
+      <!-- Tabel nilai -->
+      <div style="overflow-y:auto;max-height:55vh">
+        <table class="score-input-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Nama Siswa</th>
+              <th style="width:5.5rem;text-align:center">Nilai</th>
+              <th>Catatan</th>
+            </tr>
+          </thead>
+          <tbody id="score-tbody">
+            <!-- Diisi JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Summary bawah modal -->
+      <div style="padding:.6rem 1.25rem;border-top:1px solid var(--color-border);background:var(--color-bg);display:flex;gap:1rem;font-size:.75rem;font-weight:600;color:var(--color-text-muted)">
+        <span>Rata-rata: <span id="score-avg" style="color:var(--color-text)">—</span></span>
+        <span>Tertinggi: <span id="score-max" style="color:var(--color-success)">—</span></span>
+        <span>Terendah: <span id="score-min" style="color:var(--color-danger)">—</span></span>
+        <span>Belum diisi: <span id="score-empty" style="color:var(--color-warning)">—</span></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeScoreModal()">Batal</button>
+      <button class="btn-modal-save" id="btn-score-save" onclick="submitScores()">
+        <i data-lucide="save" style="width:.875rem;height:.875rem"></i>
+        Simpan Nilai
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script type="module">
+  import { renderSidebar }        from "../../components/sidebar.component.js";
+  import { renderNavbar }         from "../../components/navbar.component.js";
+  import { getCurrentSession }    from "../../services/auth.service.js";
+  import { getClasses }           from "../../services/attendance.service.js";
+  import {
+    GRADE_CATEGORIES,
+    getAssignmentsByClass,
+    getScoresByAssignment,
+    getStudentsWithScores,
+    upsertScores,
+    createAssignment,
+    deleteAssignment,
+    getSubjectsByClass,
+    calculateFinalScore,
+    getActiveWeights,
+    getGradeLabel,
+    getAttendanceScoreByClass,
+  } from "../../services/grades.service.js";
+  import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
+  import { getSupabaseClient } from "../../services/supabase.service.js";
+
+  // ── Guard ──
+  const session = await getCurrentSession();
+  if (!session) window.location.href = "../auth/login.html";
+
+  const teacherId = session.user.id;
+  window._teacherId = session?.user?.id
+  const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+  // Cek role dari public.teachers
+  const supabaseForRole = await getSupabaseClient();
+  const { data: myProfile } = await supabaseForRole
+    .from("teachers")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+  const isAdmin = myProfile?.role === "admin";
+
+  await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+  renderNavbar({ pageTitle: "Nilai", pageSubtitle: "Kelola nilai siswa", userName });
+
+  // ── State global ──
+  window._classes     = [];
+  window._subjects    = {};     // cache subjects per classId
+  window._assignments = [];     // assignment yang sedang tampil
+  window._scoreRows   = [];     // baris nilai di modal score (state lokal)
+  window._activeAssignment = null;
+
+  // ── Expose ke window ──
+  window.GRADE_CATEGORIES    = GRADE_CATEGORIES;
+  window.getAssignmentsByClass = getAssignmentsByClass;
+  window.getScoresByAssignment = getScoresByAssignment;
+  window.getStudentsWithScores = getStudentsWithScores;
+  window.upsertScores          = upsertScores;
+  window.createAssignment      = createAssignment;
+  window.deleteAssignment      = deleteAssignment;
+  window.getSubjectsByClass    = getSubjectsByClass;
+  window.calculateFinalScore   = calculateFinalScore;
+  window.getActiveWeights = getActiveWeights;
+  window.getGradeLabel    = getGradeLabel;
+  window.getAttendanceScoreByClass = getAttendanceScoreByClass;
+  window.showToast             = showToast;
+  window.showError             = showError;
+  window.showConfirm           = showConfirm;
+  window.getClasses            = getClasses;
+
+  // ── Init: isi dropdown kelas ──
+  const classes = await getClasses();
+  window._classes = classes;
+
+  ["input-class", "rekap-class"].forEach((id) => {
+    const sel = document.getElementById(id);
+    classes.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value       = c.id;
+      opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  });
+
+  lucide.createIcons();
+</script>
+
+
+<script>
+  /* ============================================================
+     TAB SWITCHER
+     ============================================================ */
+  function switchTab(tab) {
+    ["input","rekap"].forEach((t) => {
+      document.getElementById(`tab-${t}`).classList.toggle("active", t === tab);
+      document.getElementById(`panel-${t}`).classList.toggle("active", t === tab);
+    });
+  }
+
+  /* ============================================================
+     TAB INPUT: CLASS CHANGE
+     ============================================================ */
+  async function onClassChange() {
+    const classId = document.getElementById("input-class").value;
+    const subjectSel = document.getElementById("input-subject");
+
+    // Reset subject dropdown
+    subjectSel.innerHTML = '<option value="">Semua Mapel</option>';
+    subjectSel.disabled  = true;
+
+    document.getElementById("btn-add").style.display            = "none";
+    document.getElementById("assignment-list-container").style.display = "none";
+    document.getElementById("input-no-assignment").style.display       = "none";
+    document.getElementById("input-empty-class").style.display         = "none";
+
+    if (!classId) {
+      document.getElementById("input-empty-class").style.display = "block";
+      return;
+    }
+
+    // Load subjects
+    const subjects = await window.getSubjectsByClass(classId);
+    window._subjects[classId] = subjects;
+    subjects.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value       = s.id;
+      opt.textContent = s.name;
+      subjectSel.appendChild(opt);
+    });
+    subjectSel.disabled = false;
+
+    // Isi subject select di modal tambah
+    const addSubSel = document.getElementById("add-subject-select");
+    addSubSel.innerHTML = '<option value="">— Pilih Mapel —</option>';
+    subjects.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value       = s.id;
+      opt.textContent = s.name;
+      addSubSel.appendChild(opt);
+    });
+
+    document.getElementById("btn-add").style.display = "inline-flex";
+
+    await loadAssignments();
+  }
+
+  /* ── Load assignments ── */
+  async function loadAssignments() {
+    const classId   = document.getElementById("input-class").value;
+    const subjectId = document.getElementById("input-subject").value;
+    if (!classId) return;
+
+    // Skeleton
+    document.getElementById("input-skeleton").style.display         = "block";
+    document.getElementById("assignment-list-container").style.display = "none";
+    document.getElementById("input-no-assignment").style.display       = "none";
+
+    const assignments = await window.getAssignmentsByClass(classId, subjectId || null);
+    window._assignments = assignments;
+
+    document.getElementById("input-skeleton").style.display = "none";
+
+    if (assignments.length === 0) {
+      document.getElementById("input-no-assignment").style.display = "block";
+      return;
+    }
+
+    renderWeightBar();
+    renderAssignmentList(assignments);
+
+    document.getElementById("assignment-list-container").style.display = "block";
+    lucide.createIcons();
+  }
+
+  /* ── Render info bobot ── */
+  function renderWeightBar() {
+    const bar = document.getElementById("weight-bar");
+    const weights = window.getActiveWeights();
+    bar.innerHTML = `
+      <span style="font-weight:700;color:var(--color-text);margin-right:.25rem">Bobot:</span>
+      ${weights.map(w => `
+        <span class="weight-item">
+          <span class="weight-dot" style="background:${w.color}"></span>
+          ${w.label} ${w.weight}%
+        </span>
+      `).join("")}
+    `;
+  }
+
+  /* ── Render daftar assignment ── */
+  function renderAssignmentList(list) {
+    const ICONS = {
+      tugas:   "file-text",
+      ulangan: "file-check",
+      uts:     "clipboard-check",
+      uas:     "award",
+      bonus:   "star",
+    };
+    const LABELS = {
+      tugas: "Tugas", ulangan: "Ulangan Harian", uts: "UTS", uas: "UAS",
+      bonus: "Nilai Bonus",
+    };
+
+    const container = document.getElementById("assignment-list");
+    container.innerHTML = list.map((a) => `
+      <div class="assignment-card ${a.category}" onclick="openScoreModal('${a.id}')">
+        <div class="assignment-icon ${a.category}">
+          <i data-lucide="${ICONS[a.category] || 'file'}" style="width:1rem;height:1rem"></i>
+        </div>
+        <div class="assignment-info">
+          <div class="assignment-title">${a.title}</div>
+          <div class="assignment-meta">
+            <span class="cat-chip ${a.category}">${LABELS[a.category]}</span>
+            &nbsp;·&nbsp;${a.subjects?.name ?? "—"}
+            &nbsp;·&nbsp;${formatDate(a.assigned_date)}
+            ${a.due_date ? `&nbsp;· Deadline: ${formatDate(a.due_date)}` : ""}
+          </div>
+        </div>
+        <div class="assignment-stat">
+          <div class="assignment-stat-num">/${a.max_score}</div>
+          <div class="assignment-stat-sub">nilai maks</div>
+        </div>
+        <div class="assignment-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon-sm danger" title="Hapus" onclick="handleDeleteAssignment('${a.id}', '${escHtml(a.title)}')">
+            <i data-lucide="trash-2" style="width:.8rem;height:.8rem"></i>
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  /* ── Hapus assignment ── */
+  async function handleDeleteAssignment(id, title) {
+    const ok = await window.showConfirm(
+      "Hapus assignment?",
+      `"${title}" dan semua nilainya akan dihapus permanen.`
+    );
+    if (!ok) return;
+
+    const { success, error } = await window.deleteAssignment(id);
+    if (!success) { window.showError(error); return; }
+
+    window.showToast("success", "Assignment dihapus.");
+    await loadAssignments();
+  }
+
+  /* ── Expose ke window ── */
+  window.onClassChange     = onClassChange;
+  window.loadAssignments   = loadAssignments;
+  window.handleDeleteAssignment = handleDeleteAssignment;
+
+
+  /* ============================================================
+     MODAL: TAMBAH ASSIGNMENT
+     ============================================================ */
+  function openAddModal() {
+    // Set default tanggal hari ini
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("add-date").value = today;
+    document.getElementById("add-title").value     = "";
+    document.getElementById("add-desc").value      = "";
+    document.getElementById("add-max-score").value = "100";
+    document.getElementById("add-title-error").textContent = "";
+
+    document.getElementById("modal-add").classList.add("open");
+    document.getElementById("add-title").focus();
+  }
+
+  function closeAddModal() {
+    document.getElementById("modal-add").classList.remove("open");
+  }
+
+  async function submitAddAssignment() {
+    const title     = document.getElementById("add-title").value.trim();
+    const category  = document.getElementById("add-category").value;
+    const maxScore  = Number(document.getElementById("add-max-score").value);
+    const date      = document.getElementById("add-date").value;
+    const due       = document.getElementById("add-due").value;
+    const subjectId = document.getElementById("add-subject-select").value;
+    const desc      = document.getElementById("add-desc").value.trim();
+    const classId   = document.getElementById("input-class").value;
+
+    // Validasi
+    if (!title) {
+      document.getElementById("add-title-error").textContent = "Judul tidak boleh kosong.";
+      document.getElementById("add-title").focus();
+      return;
+    }
+    document.getElementById("add-title-error").textContent = "";
+
+    const btn = document.getElementById("btn-add-save");
+    btn.disabled = true;
+
+    const { data, error } = await window.createAssignment({
+      teacherId: window._teacherId,
+      classId,
+      subjectId: subjectId || null,
+      title,
+      category,
+      maxScore,
+      assignedDate: date || new Date().toISOString().split("T")[0],
+      dueDate:      due  || null,
+      description:  desc,
+    });
+
+    btn.disabled = false;
+
+    if (error) { window.showError(error); return; }
+
+    window.showToast("success", "Assignment berhasil ditambahkan!");
+    closeAddModal();
+    await loadAssignments();
+    lucide.createIcons();
+  }
+
+  window.openAddModal   = openAddModal;
+  window.closeAddModal  = closeAddModal;
+  window.submitAddAssignment = submitAddAssignment;
+
+
+  /* ============================================================
+     MODAL: INPUT NILAI SISWA
+     ============================================================ */
+  async function openScoreModal(assignmentId) {
+    const assignment = window._assignments.find((a) => a.id === assignmentId);
+    if (!assignment) return;
+
+    window._activeAssignment = assignment;
+
+    const LABELS = { tugas: "Tugas", ulangan: "Ulangan Harian", uts: "UTS", uas: "UAS" };
+
+    document.getElementById("score-modal-title").textContent =
+      `Input Nilai — ${assignment.title}`;
+    document.getElementById("score-modal-sub").textContent =
+      `${LABELS[assignment.category] ?? assignment.category}  ·  ${assignment.subjects?.name ?? "—"}  ·  Nilai maks: ${assignment.max_score}`;
+
+    // Fetch nilai siswa
+    document.getElementById("score-tbody").innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center;padding:2rem;color:var(--color-text-muted)">
+          <i data-lucide="loader-2" style="width:1.25rem;height:1.25rem;animation:spin .8s linear infinite"></i>
+        </td>
+      </tr>
+    `;
+
+    document.getElementById("modal-scores").classList.add("open");
+    lucide.createIcons();
+
+    // const scores = await window.getScoresByAssignment(assignmentId);
+
+    // // Jika belum ada record (belum pernah dinilai), kita perlu daftar siswa dari kelas
+    // let rows = scores;
+
+    // if (scores.length === 0) {
+    //   // Ambil siswa dari getStudentsWithScores (hanya butuh students)
+    //   const { students } = await window.getStudentsWithScores(
+    //     document.getElementById("input-class").value
+    //   );
+    //   rows = students.map((s) => ({
+    //     student_id:     s.id,
+    //     full_name:      s.full_name,
+    //     student_number: s.student_number,
+    //     score:          null,
+    //     notes:          "",
+    //   }));
+    // }
+
+    const scores = await window.getScoresByAssignment(assignmentId);
+
+    // Buat lookup skor yang sudah ada per student_id
+    const scoreMap = {};
+    scores.forEach((s) => { scoreMap[s.student_id] = s; });
+
+    // Selalu ambil SEMUA siswa di kelas (bukan hanya yang sudah punya nilai),
+    // lalu gabungkan dengan skor yang ada (kalau belum ada, score = null)
+    const { students } = await window.getStudentsWithScores(
+      document.getElementById("input-class").value
+    );
+
+    let rows = students.map((s) => ({
+      student_id:     s.id,
+      full_name:      s.full_name,
+      student_number: s.nis,
+      score:          scoreMap[s.id]?.score ?? null,
+      notes:          scoreMap[s.id]?.notes ?? "",
+    }));
+
+    window._scoreRows = rows.map((r) => ({ ...r }));
+    renderScoreRows(window._scoreRows, assignment.max_score);
+    updateScoreSummary();
+  }
+
+  function renderScoreRows(rows, maxScore) {
+    const tbody = document.getElementById("score-tbody");
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align:center;padding:2rem;color:var(--color-text-muted)">
+            Belum ada siswa di kelas ini.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = rows.map((r, i) => `
+      <tr id="srow-${r.student_id}">
+        <td style="color:var(--color-text-muted);font-weight:700;text-align:center">${i + 1}</td>
+        <td>
+          <div style="font-weight:600">${r.full_name}</div>
+          ${r.student_number
+            ? `<div style="font-size:.72rem;color:var(--color-text-muted)">${r.student_number}</div>`
+            : ""}
+        </td>
+        <td style="text-align:center">
+          <input
+            type="number"
+            class="score-number-input"
+            id="sinput-${r.student_id}"
+            value="${r.score ?? ""}"
+            placeholder="—"
+            min="0"
+            max="${maxScore}"
+            oninput="onScoreInput('${r.student_id}', this.value, ${maxScore})"
+          />
+        </td>
+        <td>
+          <input
+            type="text"
+            style="width:100%;padding:.3rem .5rem;border-radius:.35rem;border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text);font-size:.78rem;outline:none;font-family:inherit"
+            value="${r.notes ?? ""}"
+            placeholder="Catatan"
+            maxlength="80"
+            oninput="onNoteInput('${r.student_id}', this.value)"
+          />
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  function onScoreInput(studentId, value, maxScore) {
+    const row = window._scoreRows.find((r) => r.student_id === studentId);
+    if (!row) return;
+
+    const num = value === "" ? null : Number(value);
+    row.score = num;
+
+    // Tandai merah kalau melebihi nilai maks
+    const input = document.getElementById(`sinput-${studentId}`);
+    input.classList.toggle("is-over", num !== null && num > maxScore);
+
+    updateScoreSummary();
+  }
+
+  function onNoteInput(studentId, value) {
+    const row = window._scoreRows.find((r) => r.student_id === studentId);
+    if (row) row.notes = value;
+  }
+
+  function updateScoreSummary() {
+    const filled = window._scoreRows.filter((r) => r.score !== null && r.score !== "");
+    const scores = filled.map((r) => Number(r.score));
+
+    document.getElementById("score-avg").textContent   = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : "—";
+    document.getElementById("score-max").textContent   = scores.length ? Math.max(...scores) : "—";
+    document.getElementById("score-min").textContent   = scores.length ? Math.min(...scores) : "—";
+    document.getElementById("score-empty").textContent = window._scoreRows.length - filled.length;
+  }
+
+  function filterScoreRows(query) {
+    const q = query.toLowerCase().trim();
+    document.querySelectorAll("#score-tbody tr").forEach((row) => {
+      const name = row.querySelector("div[style*='font-weight:600']")?.textContent?.toLowerCase() ?? "";
+      row.style.display = name.includes(q) ? "" : "none";
+    });
+  }
+
+  async function submitScores() {
+    // Cek ada nilai melebihi maks
+    const maxScore = window._activeAssignment?.max_score ?? 100;
+    const over = window._scoreRows.some((r) => r.score !== null && Number(r.score) > maxScore);
+    if (over) {
+      window.showError(`Ada nilai yang melebihi nilai maksimal (${maxScore}). Harap periksa kembali.`);
+      return;
+    }
+
+    const filled = window._scoreRows.filter((r) => r.score !== null && r.score !== "");
+    if (filled.length === 0) {
+      window.showError("Belum ada nilai yang diisi.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-score-save");
+    btn.disabled = true;
+
+    const records = filled.map((r) => ({
+      assignmentId: window._activeAssignment.id,
+      studentId:    r.student_id,
+      score:        Number(r.score),
+      notes:        r.notes ?? "",
+    }));
+
+    const { success, error } = await window.upsertScores(records);
+
+    btn.disabled = false;
+
+    if (!success) { window.showError(error); return; }
+
+    window.showToast("success", `${filled.length} nilai berhasil disimpan!`);
+    closeScoreModal();
+  }
+
+  function closeScoreModal() {
+    document.getElementById("modal-scores").classList.remove("open");
+    window._activeAssignment = null;
+    window._scoreRows        = [];
+  }
+
+  window.openScoreModal   = openScoreModal;
+  window.closeScoreModal  = closeScoreModal;
+  window.submitScores     = submitScores;
+  window.onScoreInput     = onScoreInput;
+  window.onNoteInput      = onNoteInput;
+  window.filterScoreRows  = filterScoreRows;
+  window.updateScoreSummary = updateScoreSummary;
+
+
+  /* ============================================================
+     TAB REKAP
+     ============================================================ */
+  async function onRekapClassChange() {
+    const classId  = document.getElementById("rekap-class").value;
+    const subSel   = document.getElementById("rekap-subject");
+
+    subSel.innerHTML = '<option value="">Semua Mapel</option>';
+    subSel.disabled  = true;
+
+    document.getElementById("rekap-empty-class").style.display = "none";
+    document.getElementById("rekap-container").style.display   = "none";
+    document.getElementById("rekap-no-data").style.display     = "none";
+    document.getElementById("rekap-skeleton").style.display    = "none";
+    document.getElementById("btn-export-excel").style.display  = "none";
+
+    if (!classId) {
+      document.getElementById("rekap-empty-class").style.display = "block";
+      return;
+    }
+
+    const subjects = window._subjects[classId] || await window.getSubjectsByClass(classId);
+    window._subjects[classId] = subjects;
+
+    subjects.forEach((s) => {
+      const opt = document.createElement("option");
+      opt.value       = s.id;
+      opt.textContent = s.name;
+      subSel.appendChild(opt);
+    });
+    subSel.disabled = false;
+
+    await loadRekap();
+  }
+
+  async function loadRekap() {
+    const classId   = document.getElementById("rekap-class").value;
+    const subjectId = document.getElementById("rekap-subject").value;
+    if (!classId) return;
+
+    document.getElementById("rekap-skeleton").style.display  = "block";
+    document.getElementById("rekap-container").style.display = "none";
+    document.getElementById("rekap-no-data").style.display   = "none";
+
+    const [{ students, assignments }, attendanceScores] = await Promise.all([
+      window.getStudentsWithScores(classId, subjectId || null),
+      window.getAttendanceScoreByClass(classId, subjectId || null),
+    ]);
+
+    document.getElementById("rekap-skeleton").style.display = "none";
+
+    if (assignments.length === 0 && Object.keys(attendanceScores).length === 0) {
+      document.getElementById("rekap-no-data").style.display = "block";
+      return;
+    }
+
+    renderRekapTable(students, assignments, attendanceScores);
+    document.getElementById("rekap-container").style.display  = "block";
+    document.getElementById("btn-export-excel").style.display = "inline-flex";
+
+    window._rekapStudents       = students;
+    window._rekapAssignments    = assignments;
+    window._rekapAttendance     = attendanceScores;
+
+    lucide.createIcons();
+  }
+
+  function renderRekapTable(students, assignments, attendanceScores = {}) {
+    const activeWeights   = window.getActiveWeights();
+    const kehadiranActive = activeWeights.some(w => w.key === "kehadiran");
+
+    // Kelompokkan assignments per mapel
+    const subjectMap = {};
+    assignments.forEach(a => {
+      const sid   = a.subjects?.id   ?? "__none__";
+      const sname = a.subjects?.name ?? "Tanpa Mapel";
+      if (!subjectMap[sid]) subjectMap[sid] = { name: sname, assignments: [] };
+      subjectMap[sid].assignments.push(a);
+    });
+
+    const subjectList = Object.values(subjectMap);
+
+    // Kalau filter per mapel, subjectList hanya 1 — kalau semua mapel bisa banyak
+    const container = document.getElementById("rekap-container");
+
+    // Hapus tabel lama (kecuali stat cards)
+    container.querySelectorAll(".rekap-multi-table").forEach(el => el.remove());
+
+    // ── Stat cards ──
+    const withScore = students.map(s => {
+      const byCategory = {};
+      assignments.forEach(a => {
+        if (!byCategory[a.category]) byCategory[a.category] = [];
+        const sc = s.scores[a.id];
+        if (sc != null) byCategory[a.category].push(sc);
+      });
+      if (kehadiranActive && attendanceScores[s.id] != null)
+        byCategory.kehadiran = [attendanceScores[s.id]];
+      return window.calculateFinalScore(byCategory);
+    }).filter(s => s != null);
+
+    const avgFinal = withScore.length
+      ? (withScore.reduce((a,b)=>a+b,0)/withScore.length).toFixed(1) : "—";
+    const maxFinal = withScore.length ? Math.max(...withScore) : "—";
+    const minFinal = withScore.length ? Math.min(...withScore) : "—";
+    const attendanceVals = Object.values(attendanceScores);
+    const avgAtt = attendanceVals.length
+      ? (attendanceVals.reduce((a,b)=>a+b,0)/attendanceVals.length).toFixed(1) : "—";
+
+    document.getElementById("rekap-stats").innerHTML = `
+      <div class="grade-stat-card">
+        <div class="grade-stat-label">Jumlah Siswa</div>
+        <div class="grade-stat-value">${students.length}</div>
+        <div class="grade-stat-sub">terdaftar di kelas</div>
+      </div>
+      <div class="grade-stat-card">
+        <div class="grade-stat-label">Rata-rata Kelas</div>
+        <div class="grade-stat-value">${avgFinal}</div>
+        <div class="grade-stat-sub">nilai akhir</div>
+      </div>
+      <div class="grade-stat-card">
+        <div class="grade-stat-label">Nilai Tertinggi</div>
+        <div class="grade-stat-value" style="color:var(--color-success)">${maxFinal}</div>
+        <div class="grade-stat-sub">nilai akhir</div>
+      </div>
+      ${kehadiranActive ? `
+      <div class="grade-stat-card">
+        <div class="grade-stat-label">Rata-rata Kehadiran</div>
+        <div class="grade-stat-value" style="color:#16a34a">${avgAtt}%</div>
+        <div class="grade-stat-sub">seluruh kelas</div>
+      </div>` : `
+      <div class="grade-stat-card">
+        <div class="grade-stat-label">Nilai Terendah</div>
+        <div class="grade-stat-value" style="color:var(--color-danger)">${minFinal}</div>
+        <div class="grade-stat-sub">nilai akhir</div>
+      </div>`}
+    `;
+
+    // ── Render satu tabel per mapel ──
+    subjectList.forEach(({ name: subjectName, assignments: asgList }) => {
+      const tableEl = _buildSubjectTable(
+        subjectName, students, asgList, attendanceScores, kehadiranActive
+      );
+      container.appendChild(tableEl);
+    });
+  }
+
+  /**
+   * _buildSubjectTable
+   * Membangun satu blok tabel untuk satu mata pelajaran,
+   * dengan header 3 baris (Mapel / Kategori-grup / Judul assignment).
+   */
+  function _buildSubjectTable(subjectName, students, asgList, attendanceScores, kehadiranActive) {
+    const CATEGORY_ORDER = ["tugas","ulangan","uts","uas","bonus"];
+    const CAT_LABEL = {
+      tugas:"TUGAS", ulangan:"ULANGAN", uts:"UTS", uas:"UAS", bonus:"BONUS"
+    };
+    const CAT_COLOR = {
+      tugas:"rgba(37,99,235,.08)", ulangan:"rgba(245,158,11,.08)",
+      uts:"rgba(124,58,237,.08)", uas:"rgba(34,197,94,.08)",
+      bonus:"rgba(245,158,11,.08)"
+    };
+
+    // Kelompokkan assignments per kategori (urut sesuai CATEGORY_ORDER)
+    const byCategory = {};
+    CATEGORY_ORDER.forEach(c => { byCategory[c] = []; });
+    asgList.forEach(a => {
+      if (byCategory[a.category]) byCategory[a.category].push(a);
+    });
+
+    // Hitung colspan per kategori (hanya yang punya assignment)
+    const activeCats = CATEGORY_ORDER.filter(c => byCategory[c].length > 0);
+
+    // Hitung total kolom data (semua assignment + kehadiran + nilai akhir + grade + ranking)
+    const totalAsgCols = asgList.length;
+    const extraCols    = (kehadiranActive ? 1 : 0) + 3; // kehadiran + nilai akhir + grade + ranking
+    const totalCols    = 1 + totalAsgCols + extraCols;   // 1 = nama siswa
+
+    // ── Hitung nilai akhir & ranking ──
+    const processed = students.map(s => {
+      const byCat = {};
+      asgList.forEach(a => {
+        if (!byCat[a.category]) byCat[a.category] = [];
+        const sc = s.scores?.[a.id];
+        if (sc != null) byCat[a.category].push(sc);
+      });
+      if (kehadiranActive && attendanceScores[s.id] != null)
+        byCat.kehadiran = [attendanceScores[s.id]];
+      const finalScore = window.calculateFinalScore(byCat);
+      return { ...s, finalScore, attendanceScore: attendanceScores[s.id] ?? null };
+    });
+
+    const sorted = [...processed].sort((a,b) => (b.finalScore??-1)-(a.finalScore??-1));
+    const rankMap = {};
+    sorted.forEach((s,i) => { rankMap[s.id] = s.finalScore != null ? i+1 : "—"; });
+
+    // ── Build HTML ──
+    const wrap = document.createElement("div");
+    wrap.className = "rekap-multi-table rekap-wrapper";
+    wrap.style.cssText = "margin-bottom:1.5rem;overflow-x:auto;";
+
+    // Baris 1: Mapel header (full width)
+    // Baris 2: Kategori grup (colspan per kategori)
+    // Baris 3: Judul assignment individual
+
+    let row1 = `<tr>
+      <th rowspan="3" style="min-width:9rem;vertical-align:middle">Nama Siswa</th>
+      <th colspan="${totalAsgCols + extraCols}" style="text-align:center;background:rgba(37,99,235,.06);color:var(--color-primary)">${subjectName}</th>
+    </tr>`;
+
+    // Baris 2: grup kategori
+    let row2 = `<tr>`;
+    activeCats.forEach(cat => {
+      const count = byCategory[cat].length;
+      // UTS & UAS tiap assignment = 1 kolom (tidak perlu grup kalau hanya 1)
+      row2 += `<th colspan="${count}" style="text-align:center;background:${CAT_COLOR[cat]};white-space:nowrap">${CAT_LABEL[cat]}</th>`;
+    });
+    if (kehadiranActive) row2 += `<th rowspan="2" style="text-align:center;vertical-align:middle;white-space:nowrap">KEHADIRAN</th>`;
+    row2 += `<th rowspan="2" style="text-align:center;vertical-align:middle;white-space:nowrap">Nilai Akhir</th>`;
+    row2 += `<th rowspan="2" style="text-align:center;vertical-align:middle">Grade</th>`;
+    row2 += `<th rowspan="2" style="text-align:center;vertical-align:middle">Ranking</th>`;
+    row2 += `</tr>`;
+
+    // Baris 3: judul per assignment
+    let row3 = `<tr>`;
+    activeCats.forEach(cat => {
+      byCategory[cat].forEach(a => {
+        row3 += `<th style="text-align:center;font-weight:600;min-width:5rem;max-width:7rem;white-space:normal;word-break:break-word;font-size:.7rem">${a.title}</th>`;
+      });
+    });
+    row3 += `</tr>`;
+
+    // Tbody
+    // Urutkan assignment sesuai CATEGORY_ORDER untuk kolom yang benar
+    const orderedAsg = [];
+    activeCats.forEach(cat => byCategory[cat].forEach(a => orderedAsg.push(a)));
+
+    const tbody = processed.map(s => {
+      const rank      = rankMap[s.id];
+      const rankClass = rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"rank-n";
+      const grade     = toGrade(s.finalScore);
+
+      let row = `<tr>
+        <td>
+          <div style="font-weight:600">${s.full_name}</div>
+          ${s.nis?`<div style="font-size:.72rem;color:var(--color-text-muted)">${s.nis}</div>`:""}
+        </td>`;
+
+      orderedAsg.forEach(a => {
+        const sc = s.scores?.[a.id];
+        row += `<td style="text-align:center;font-weight:600">
+          ${sc!=null ? sc : '<span style="color:var(--color-border)">—</span>'}
+        </td>`;
+      });
+
+      if (kehadiranActive) {
+        row += `<td style="text-align:center;font-weight:600">
+          ${s.attendanceScore!=null
+            ? `<span style="color:#16a34a">${s.attendanceScore}%</span>`
+            : '<span style="color:var(--color-border)">—</span>'}
+        </td>`;
+      }
+
+      row += `
+        <td style="text-align:center"><strong>${s.finalScore!=null?s.finalScore:"—"}</strong></td>
+        <td style="text-align:center"><span class="grade-chip ${grade}">${grade}</span></td>
+        <td style="text-align:center"><span class="rank-badge ${rankClass}">${rank}</span></td>
+      </tr>`;
+      return row;
+    }).join("");
+
+    wrap.innerHTML = `
+      <div style="font-size:.8125rem;font-weight:700;color:var(--color-text-muted);margin-bottom:.5rem;padding-left:.25rem">
+        Mata Pelajaran: <span style="color:var(--color-text)">${subjectName}</span>
+      </div>
+      <table class="rekap-table" style="min-width:max-content">
+        <thead>${row1}${row2}${row3}</thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    `;
+
+    return wrap;
+  }
+
+  window.onRekapClassChange = onRekapClassChange;
+  window.loadRekap          = loadRekap;
+
+
+  /* ============================================================
+     EXPORT EXCEL
+     ============================================================ */
+  function exportExcel() {
+    const students         = window._rekapStudents    ?? [];
+    const assignments      = window._rekapAssignments ?? [];
+    const attendanceScores = window._rekapAttendance  ?? {};
+    const className        = document.getElementById("rekap-class").selectedOptions[0]?.text ?? "Kelas";
+    const subjectFilter    = document.getElementById("rekap-subject");
+    const subjectFilterName = subjectFilter.value
+      ? subjectFilter.selectedOptions[0]?.text : null;
+
+    if (!students.length) return;
+
+    const activeWeights   = window.getActiveWeights();
+    const kehadiranActive = activeWeights.some(w => w.key === "kehadiran");
+    const CATEGORY_ORDER  = ["tugas","ulangan","uts","uas","bonus"];
+    const CAT_LABEL       = { tugas:"Tugas", ulangan:"Ulangan Harian", uts:"UTS", uas:"UAS", bonus:"Bonus" };
+
+    // Kelompokkan assignments per mapel
+    const subjectMap = {};
+    assignments.forEach(a => {
+      const sid   = a.subjects?.id   ?? "__none__";
+      const sname = a.subjects?.name ?? "Tanpa Mapel";
+      if (!subjectMap[sid]) subjectMap[sid] = { name: sname, assignments: [] };
+      subjectMap[sid].assignments.push(a);
+    });
+
+    const wb = XLSX.utils.book_new();
+
+    Object.values(subjectMap).forEach(({ name: subjectName, assignments: asgList }) => {
+      // Urut assignment sesuai CATEGORY_ORDER
+      const activeCats = CATEGORY_ORDER.filter(c => asgList.some(a => a.category === c));
+      const orderedAsg = [];
+      activeCats.forEach(cat => asgList.filter(a=>a.category===cat).forEach(a=>orderedAsg.push(a)));
+
+      // ── Baris 1: Mapel ──
+      const mapelRow = ["Mapel", subjectName];
+
+      // ── Baris 2: Kategori grup ──
+      const catRow = ["Nama Siswa"];
+      activeCats.forEach(cat => {
+        const count = asgList.filter(a=>a.category===cat).length;
+        catRow.push(CAT_LABEL[cat]);
+        for (let i=1; i<count; i++) catRow.push(""); // merge placeholder
+      });
+      if (kehadiranActive) catRow.push("KEHADIRAN");
+      catRow.push("Nilai Akhir", "Grade", "Ranking");
+
+      // ── Baris 3: Judul assignment ──
+      const titleRow = [""];
+      orderedAsg.forEach(a => titleRow.push(a.title));
+      if (kehadiranActive) titleRow.push("");
+      titleRow.push("","","");
+
+      // ── Data rows ──
+      const processed = students.map(s => {
+        const byCat = {};
+        asgList.forEach(a => {
+          if (!byCat[a.category]) byCat[a.category] = [];
+          const sc = s.scores?.[a.id];
+          if (sc != null) byCat[a.category].push(sc);
+        });
+        if (kehadiranActive && attendanceScores[s.id] != null)
+          byCat.kehadiran = [attendanceScores[s.id]];
+        return { ...s, finalScore: window.calculateFinalScore(byCat) };
+      });
+
+      const sorted = [...processed].sort((a,b)=>(b.finalScore??-1)-(a.finalScore??-1));
+      const rankMap = {};
+      sorted.forEach((s,i) => { rankMap[s.id] = s.finalScore!=null ? i+1 : ""; });
+
+      const dataRows = processed.map(s => {
+        const row = [s.full_name];
+        orderedAsg.forEach(a => row.push(s.scores?.[a.id] ?? ""));
+        if (kehadiranActive) row.push(attendanceScores[s.id] ?? "");
+        row.push(s.finalScore ?? "", toGrade(s.finalScore), rankMap[s.id]);
+        return row;
+      });
+
+      const sheetData = [mapelRow, catRow, titleRow, ...dataRows];
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+      // Merge cell Mapel (A1 sampai kolom terakhir)
+      const totalCols = 1 + orderedAsg.length + (kehadiranActive?1:0) + 3;
+      if (!ws["!merges"]) ws["!merges"] = [];
+      ws["!merges"].push(
+        { s:{r:0,c:1}, e:{r:0,c:totalCols-1} }, // baris Mapel: merge kolom mapel
+        // Merge kategori yang punya >1 kolom
+        ...(() => {
+          const merges = [];
+          let col = 1;
+          activeCats.forEach(cat => {
+            const count = asgList.filter(a=>a.category===cat).length;
+            if (count > 1) merges.push({ s:{r:1,c:col}, e:{r:1,c:col+count-1} });
+            col += count;
+          });
+          return merges;
+        })()
+      );
+
+      // Nama sheet: "NamaMapel - NamaKelas" (maks 31 karakter, aturan Excel)
+      const rawSheet = `${subjectName} - ${className}`;
+      const sheetName = rawSheet.length > 31 ? rawSheet.substring(0,31) : rawSheet;
+
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    XLSX.writeFile(wb, `Rekap_Nilai_${className}_${new Date().toISOString().split("T")[0]}.xlsx`);
+    window.showToast("success", "File Excel berhasil diunduh!");
+  }
+
+  window.exportExcel = exportExcel;
+
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+
+  /** Konversi nilai angka ke huruf (A/B/C/D) */
+  function toGrade(score) {
+    return window.getGradeLabel(score);
+  }
+
+  /** Format tanggal "YYYY-MM-DD" → "24 Jun 2025" */
+  function formatDate(dateStr) {
+    if (!dateStr) return "—";
+    return new Date(dateStr + "T00:00:00").toLocaleDateString("id-ID", {
+      day: "numeric", month: "short", year: "numeric"
+    });
+  }
+
+  /** Escape HTML untuk mencegah XSS di data attribute */
+  function escHtml(str) {
+    return (str ?? "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+  }
+
+  window.toGrade    = toGrade;
+  window.formatDate = formatDate;
+  window.escHtml    = escHtml;
+
+  // Tutup modal kalau klik overlay
+  document.getElementById("modal-add").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-add")) closeAddModal();
+  });
+  document.getElementById("modal-scores").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-scores")) closeScoreModal();
+  });
+</script>
+
+</body>
+</html>

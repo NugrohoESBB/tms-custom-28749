@@ -1,0 +1,430 @@
+/* ============================================================
+   DASHBOARD LAYOUT CSS
+   ============================================================
+   Berisi:
+   1. Shell layout: sidebar kiri + main area kanan (CSS Grid).
+   2. Sidebar: lebar, collapsed state, nav items, active state.
+   3. Navbar: top bar dengan search, dark mode toggle, user menu.
+   4. Responsive: sidebar auto-collapse di mobile (off-canvas).
+   ============================================================ */
+
+/* ── Shell: pembungkus seluruh halaman dashboard ── */
+.dashboard-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 100vh;
+  grid-template-areas: "sidebar main";
+  overflow: hidden;
+}
+
+/* Saat sidebar di-collapse, lebar sidebar menyempit ke 64px */
+.dashboard-shell.sidebar-collapsed {
+  grid-template-columns: 64px 1fr;
+}
+
+/* Transisi lebar kolom supaya collapse/expand terasa smooth */
+.dashboard-shell,
+.dashboard-shell.sidebar-collapsed {
+  transition: grid-template-columns 0.25s ease;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  transition: width 0.25s ease;
+  position: relative;
+  z-index: 20;
+}
+
+/* Logo area di atas sidebar */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  min-height: 60px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar-logo-icon {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, var(--color-primary), #1e3a8a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.sidebar-logo-text {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+  transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+/* Nav links */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.75rem 0.5rem;
+}
+
+/* Scrollbar tipis supaya tidak mengganggu visual */
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 99px;
+}
+
+/* Label grup (misal "MENU", "DATA") */
+.nav-group-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  padding: 0.75rem 0.75rem 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  margin-bottom: 0.125rem;
+}
+
+.nav-item:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.nav-item.active {
+  background-color: #eff6ff; /* biru sangat muda */
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+html.dark .nav-item.active {
+  background-color: rgba(37, 99, 235, 0.15);
+}
+
+.nav-item-icon {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.nav-item-label {
+  transition: opacity 0.15s ease;
+}
+
+/* Badge notifikasi kecil di kanan nav item */
+.nav-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 99px;
+  background-color: var(--color-primary);
+  color: white;
+  transition: opacity 0.15s ease;
+}
+
+/* Footer sidebar: profil user singkat */
+.sidebar-footer {
+  padding: 0.75rem 0.5rem;
+  border-top: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-user:hover {
+  background-color: var(--color-bg);
+}
+
+.sidebar-avatar {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+/* ── COLLAPSED STATE ── */
+/* Saat sidebar collapsed, sembunyikan teks, label grup, dsb */
+.sidebar-collapsed .sidebar .sidebar-logo-text,
+.sidebar-collapsed .sidebar .nav-item-label,
+.sidebar-collapsed .sidebar .nav-group-label,
+.sidebar-collapsed .sidebar .sidebar-user-info,
+.sidebar-collapsed .sidebar .nav-badge {
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+}
+
+.sidebar-collapsed .sidebar .nav-item {
+  justify-content: center;
+  padding: 0.6rem;
+}
+
+.sidebar-collapsed .sidebar .sidebar-user {
+  justify-content: center;
+}
+
+/* Tooltip saat collapsed (nama item muncul di hover) */
+.nav-item[data-tooltip] {
+  position: relative;
+}
+
+.sidebar-collapsed .nav-item[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.4rem;
+  white-space: nowrap;
+  z-index: 50;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ── MAIN AREA ── */
+.dashboard-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-bg);
+}
+
+/* ── NAVBAR ── */
+.dashboard-navbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  min-height: 60px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+/* Tombol toggle sidebar (hamburger) */
+.navbar-toggle-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.navbar-toggle-btn:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Breadcrumb / Page title area */
+.navbar-breadcrumb {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar-page-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.navbar-page-sub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Kanan navbar: actions */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-icon-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  position: relative;
+}
+
+.navbar-icon-btn:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Notif dot merah kecil di atas icon */
+.navbar-icon-btn .notif-dot {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 7px;
+  height: 7px;
+  background-color: var(--color-danger);
+  border-radius: 50%;
+  border: 1.5px solid var(--color-surface);
+}
+
+/* Avatar user di navbar kanan */
+.navbar-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+
+.navbar-avatar:hover { opacity: 0.85; }
+
+/* ── CONTENT AREA ── */
+.dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.dashboard-content::-webkit-scrollbar { width: 5px; }
+.dashboard-content::-webkit-scrollbar-track { background: transparent; }
+.dashboard-content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 99px;
+}
+
+/* ── MOBILE ── */
+/* Di layar < 768px: sidebar jadi off-canvas overlay */
+@media (max-width: 767px) {
+  .dashboard-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas: "main";
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 240px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: var(--shadow-soft);
+    z-index: 50;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    z-index: 40;
+    backdrop-filter: blur(2px);
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  /* Di mobile, collapse state tidak berlaku (pakai off-canvas) */
+  .dashboard-shell.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+}

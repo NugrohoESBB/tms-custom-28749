@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jadwal — Teacher Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    /* ── Skeleton loader ── */
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-bg) 50%,
+        var(--color-border) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 0.4rem;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── View toggle ── */
+    .view-toggle {
+      display: flex;
+      gap: 0.25rem;
+      background-color: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 0.6rem;
+      padding: 0.2rem;
+    }
+    .view-toggle button {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.45rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+      background: transparent;
+    }
+    .view-toggle button.active {
+      background-color: var(--color-surface);
+      color: var(--color-text);
+      box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+    }
+
+    /* ── Month navigator ── */
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .week-nav-btn {
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.45rem;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .week-nav-btn:hover {
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+    .week-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text);
+      min-width: 8rem;
+      text-align: center;
+    }
+
+    /* ── MONTH VIEW: tiap minggu = 1 baris, tiap hari = 1 kolom ── */
+    .month-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* Baris header nama hari (Sen–Jum) */
+    .month-day-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .month-day-header-cell {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+      padding: 0.35rem 0;
+    }
+
+    /* Tiap baris minggu */
+    .month-week-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Tiap sel hari */
+    .month-day-cell {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 0.65rem;
+      padding: 0.5rem;
+      min-height: 5.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .month-day-cell.is-today {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
+    }
+    .month-day-cell.is-outside {
+      opacity: 0.35;
+      background: var(--color-bg);
+    }
+
+    .month-day-cell.is-clickable-empty {
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .month-day-cell.is-clickable-empty:hover {
+      background-color: var(--color-bg);
+      border-color: var(--color-primary);
+    }
+    .month-day-cell.is-clickable-empty:has(.month-card:hover) {
+      background-color: var(--color-surface);
+      border-color: var(--color-border);
+    }
+
+    .month-date-num {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .month-date-num.is-today-num {
+      color: var(--color-primary);
+    }
+    .today-badge {
+      font-size: 0.6rem;
+      background: var(--color-primary);
+      color: white;
+      border-radius: 99px;
+      padding: 0.05rem 0.4rem;
+      font-weight: 700;
+    }
+
+    /* Card mini di month view */
+    .month-card {
+      border-radius: 0.4rem;
+      padding: 0.3rem 0.45rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      line-height: 1.3;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      position: relative;
+    }
+    .month-card:hover {
+      opacity: 0.85;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+      transform: translateY(-1px);
+    }
+    .month-card.status-upcoming {
+      background: var(--color-bg);
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
+    }
+    .month-card.status-ongoing {
+      background: rgba(37,99,235,0.1);
+      color: var(--color-primary);
+    }
+    .month-card.status-done {
+      background: rgba(34,197,94,0.08);
+      color: var(--color-success);
+    }
+    .month-card-time {
+      font-weight: 500;
+      opacity: 0.75;
+      font-size: 0.63rem;
+    }
+
+    @media (max-width: 1100px) {
+      .month-day-headers,
+      .month-week-row { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 700px) {
+      .month-day-headers,
+      .month-week-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* day-column tidak dipakai di month view, dihapus */
+
+    /* ── Schedule Card ── */
+    .schedule-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      cursor: default;
+      transition: box-shadow 0.15s ease, transform 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .schedule-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 3px 0 0 3px;
+    }
+    .schedule-card.status-upcoming::before  { background: var(--color-border); }
+    .schedule-card.status-ongoing::before   { background: var(--color-primary); }
+    .schedule-card.status-done::before      { background: var(--color-success); }
+
+    .schedule-card:hover {
+      box-shadow: 0 4px 16px rgba(15,23,42,0.1);
+      transform: translateY(-1px);
+    }
+
+    .card-time {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-bottom: 0.35rem;
+    }
+    .card-subject {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--color-text);
+      line-height: 1.3;
+      margin-bottom: 0.2rem;
+    }
+    .card-class {
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .card-room {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.65rem;
+      color: var(--color-text-muted);
+      background: var(--color-bg);
+      border-radius: 0.35rem;
+      padding: 0.15rem 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Badge status */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      border-radius: 99px;
+    }
+    .status-badge.upcoming {
+      background: var(--color-bg);
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
+    }
+    .status-badge.ongoing {
+      background: rgba(37,99,235,0.1);
+      color: var(--color-primary);
+    }
+    .status-badge.done {
+      background: rgba(34,197,94,0.1);
+      color: var(--color-success);
+    }
+
+    /* Tombol catat kehadiran */
+    .btn-attendance {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      width: 100%;
+      margin-top: 0.6rem;
+      padding: 0.4rem;
+      border-radius: 0.45rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+    }
+    .btn-attendance.not-recorded {
+      background: rgba(37,99,235,0.08);
+      color: var(--color-primary);
+    }
+    .btn-attendance.not-recorded:hover {
+      background: rgba(37,99,235,0.15);
+    }
+    .btn-attendance.recorded {
+      background: rgba(34,197,94,0.08);
+      color: var(--color-success);
+      cursor: default;
+    }
+
+    /* Attendance mini summary */
+    .attendance-summary {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.65rem;
+      color: var(--color-text-muted);
+      margin-top: 0.4rem;
+    }
+
+    /* ── LIST VIEW ── */
+    .list-day-section {
+      margin-bottom: 1.5rem;
+    }
+    .list-day-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-muted);
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .list-day-label .today-chip {
+      font-size: 0.6rem;
+      background: var(--color-primary);
+      color: white;
+      border-radius: 99px;
+      padding: 0.1rem 0.45rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .list-schedule-row {
+      display: flex;
+      align-items: stretch;
+      gap: 1rem;
+      padding: 0.875rem 1rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      margin-bottom: 0.5rem;
+      transition: box-shadow 0.15s ease;
+    }
+    .list-schedule-row:hover {
+      box-shadow: 0 2px 12px rgba(15,23,42,0.08);
+    }
+
+    .list-time-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 3.5rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      gap: 0.15rem;
+      flex-shrink: 0;
+    }
+    .list-time-end {
+      font-weight: 500;
+      color: var(--color-text-muted);
+      font-size: 0.75rem;
+    }
+
+    .list-divider {
+      width: 1px;
+      background: var(--color-border);
+      flex-shrink: 0;
+      border-radius: 1px;
+    }
+
+    .list-info-col { flex: 1; min-width: 0; }
+    .list-subject  {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 0.2rem;
+    }
+    .list-meta {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    .list-action-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Empty state ── */
+    .empty-week {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      gap: 0.75rem;
+      color: var(--color-text-muted);
+      text-align: center;
+    }
+    .empty-week svg { opacity: 0.3; }
+    .empty-week p   { font-size: 0.875rem; max-width: 18rem; }
+
+    /* ── Left accent per card di list view ── */
+    .list-schedule-row { position: relative; padding-left: 1.25rem; }
+    .list-schedule-row::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0.75rem; bottom: 0.75rem;
+      width: 3px;
+      border-radius: 3px;
+    }
+    .list-schedule-row.status-upcoming::before  { background: var(--color-border); }
+    .list-schedule-row.status-ongoing::before   { background: var(--color-primary); }
+    .list-schedule-row.status-done::before      { background: var(--color-success); }
+  </style>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem("tms-theme") || "light";
+      if (t === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+</head>
+<body>
+
+<div class="dashboard-shell" id="dashboard-shell">
+
+  <div id="sidebar-root"></div>
+
+  <div class="dashboard-main">
+    <div id="navbar-root"></div>
+
+    <main class="dashboard-content">
+
+      <!-- ── Header & Controls ── -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-xl font-bold">Jadwal Mengajar</h2>
+          <p class="text-sm mt-0.5" style="color:var(--color-text-muted)">
+            Kelola dan pantau sesi mengajar kamu.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Month navigator -->
+          <div class="week-nav">
+            <button class="week-nav-btn" id="btn-prev-week" title="Bulan sebelumnya">
+              <i data-lucide="chevron-left" style="width:.875rem;height:.875rem"></i>
+            </button>
+            <span class="week-label" id="week-label">Memuat...</span>
+            <button class="week-nav-btn" id="btn-next-week" title="Bulan berikutnya">
+              <i data-lucide="chevron-right" style="width:.875rem;height:.875rem"></i>
+            </button>
+          </div>
+
+          <!-- Tombol "Hari ini" -->
+          <button
+            id="btn-today"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition"
+            style="border-color:var(--color-border);background:var(--color-surface);color:var(--color-text)"
+          >
+            <i data-lucide="calendar-days" style="width:.8rem;height:.8rem"></i>
+            Hari ini
+          </button>
+          
+          <button
+            id="btn-add-schedule"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition"
+            style="background-color: var(--color-primary)"
+          >
+            <i data-lucide="plus" style="width:.8rem;height:.8rem"></i>
+            Tambah Jadwal
+          </button>
+
+          <!-- View toggle -->
+          <div class="view-toggle">
+            <button id="btn-view-week" class="active">
+              <i data-lucide="calendar-range" style="width:.8rem;height:.8rem"></i>
+              Bulan
+            </button>
+            <button id="btn-view-list">
+              <i data-lucide="list" style="width:.8rem;height:.8rem"></i>
+              List
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Konten jadwal ── -->
+      <div id="schedule-container">
+        <!-- Diisi oleh JS -->
+        <!-- <div style="display:flex;flex-direction:column;gap:.5rem">
+          ${[...Array(4)].map(() => `
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+              ${[...Array(5)].map(() => `
+                <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div> -->
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+            <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script type="module">
+  import { renderSidebar }   from "../../components/sidebar.component.js";
+  import { renderNavbar }    from "../../components/navbar.component.js";
+  import { getCurrentSession } from "../../services/auth.service.js";
+  import { getSchedulesByWeek, getAttendanceSummaryForSchedule, createSchedule, updateSchedule, deleteSchedule }
+    from "../../services/schedule.service.js";
+  import { getClassesForFilter } from "../../services/students.service.js";
+  import { getSubjects } from "../../services/subjects.service.js";
+  import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
+  import { getSupabaseClient } from "../../services/supabase.service.js";
+
+  // ── Auth guard ──
+  const session = await getCurrentSession();
+  if (!session) { window.location.href = "../auth/login.html"; }
+
+  const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+  const teacherId = session.user.id;
+
+  document.getElementById("btn-add-schedule").addEventListener("click", openAddScheduleDialog);
+
+  async function openAddScheduleDialog(prefillDate = "") {
+    const [classes, subjects] = await Promise.all([getClassesForFilter(), getSubjects()]);
+
+    if (classes.length === 0 || subjects.length === 0) {
+      showError("Pastikan data Kelas dan Mata Pelajaran sudah dibuat sebelum menambah jadwal.");
+      return;
+    }
+
+    const classOptions   = classes.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+    const subjectOptions = subjects.map((s) => `<option value="${s.id}">${s.name}</option>`).join("");
+
+    const { value: form } = await Swal.fire({
+      title: "Tambah Jadwal Mengajar",
+      width: 420,
+      html: `
+        <div style="text-align:left;display:flex;flex-direction:column;gap:.6rem">
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Kelas</label>
+            <select id="swal-class" class="swal2-input" style="margin:.25rem 0 0;width:100%">${classOptions}</select>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Mata Pelajaran</label>
+            <select id="swal-subject" class="swal2-input" style="margin:.25rem 0 0;width:100%">${subjectOptions}</select>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Tanggal</label>
+            <input type="date" id="swal-date" class="swal2-input" style="margin:.25rem 0 0;width:100%" value="${prefillDate}" />
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <div style="flex:1">
+              <label style="font-size:.8rem;font-weight:600">Jam Mulai</label>
+              <input type="time" id="swal-start" class="swal2-input" style="margin:.25rem 0 0;width:100%" />
+            </div>
+            <div style="flex:1">
+              <label style="font-size:.8rem;font-weight:600">Jam Selesai</label>
+              <input type="time" id="swal-end" class="swal2-input" style="margin:.25rem 0 0;width:100%" />
+            </div>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Ruang (opsional)</label>
+            <input type="text" id="swal-room" class="swal2-input" style="margin:.25rem 0 0;width:100%" placeholder="Misal: Ruang 205" />
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Simpan Jadwal",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#2563EB",
+      focusConfirm: false,
+      preConfirm: () => {
+        const classId   = document.getElementById("swal-class").value;
+        const subjectId = document.getElementById("swal-subject").value;
+        const date  = document.getElementById("swal-date").value;
+        const start = document.getElementById("swal-start").value;
+        const end   = document.getElementById("swal-end").value;
+        const room  = document.getElementById("swal-room").value;
+
+        if (!date || !start || !end) {
+          Swal.showValidationMessage("Tanggal, jam mulai, dan jam selesai wajib diisi.");
+          return false;
+        }
+        if (start >= end) {
+          Swal.showValidationMessage("Jam mulai harus sebelum jam selesai.");
+          return false;
+        }
+        return { classId, subjectId, date, start, end, room };
+      },
+    });
+
+    if (!form) return;
+
+    const { success, error } = await createSchedule({
+      teacherId,
+      classId:       form.classId,
+      subjectId:     form.subjectId,
+      scheduledDate: form.date,
+      startTime:     form.start,
+      endTime:       form.end,
+      room:          form.room,
+    });
+
+    if (!success) { showError(error); return; }
+
+    showToast("success", "Jadwal berhasil ditambahkan.");
+    await renderSchedule();
+  }
+
+  async function openEditScheduleDialog(item) {
+    const [classes, subjects] = await Promise.all([getClassesForFilter(), getSubjects()]);
+
+    const classOptions = classes
+      .map((c) => `<option value="${c.id}" ${c.id === item.class_id ? "selected" : ""}>${c.name}</option>`)
+      .join("");
+    const subjectOptions = subjects
+      .map((s) => `<option value="${s.id}" ${s.id === item.subject_id ? "selected" : ""}>${s.name}</option>`)
+      .join("");
+
+    const { value: form, isDenied } = await Swal.fire({
+      title: "Edit Jadwal Mengajar",
+      width: 420,
+      html: `
+        <div style="text-align:left;display:flex;flex-direction:column;gap:.6rem">
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Kelas</label>
+            <select id="swal-class" class="swal2-input" style="margin:.25rem 0 0;width:100%">${classOptions}</select>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Mata Pelajaran</label>
+            <select id="swal-subject" class="swal2-input" style="margin:.25rem 0 0;width:100%">${subjectOptions}</select>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Tanggal</label>
+            <input type="date" id="swal-date" class="swal2-input" style="margin:.25rem 0 0;width:100%" value="${item.scheduled_date}" />
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <div style="flex:1">
+              <label style="font-size:.8rem;font-weight:600">Jam Mulai</label>
+              <input type="time" id="swal-start" class="swal2-input" style="margin:.25rem 0 0;width:100%" value="${(item.start_time ?? '').slice(0,5)}" />
+            </div>
+            <div style="flex:1">
+              <label style="font-size:.8rem;font-weight:600">Jam Selesai</label>
+              <input type="time" id="swal-end" class="swal2-input" style="margin:.25rem 0 0;width:100%" value="${(item.end_time ?? '').slice(0,5)}" />
+            </div>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600">Ruang (opsional)</label>
+            <input type="text" id="swal-room" class="swal2-input" style="margin:.25rem 0 0;width:100%" value="${item.room ?? ''}" placeholder="Misal: Ruang 205" />
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: "Simpan Perubahan",
+      denyButtonText: "Hapus Jadwal",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#2563EB",
+      denyButtonColor: "#EF4444",
+      focusConfirm: false,
+      preConfirm: () => {
+        const classId   = document.getElementById("swal-class").value;
+        const subjectId = document.getElementById("swal-subject").value;
+        const date  = document.getElementById("swal-date").value;
+        const start = document.getElementById("swal-start").value;
+        const end   = document.getElementById("swal-end").value;
+        const room  = document.getElementById("swal-room").value;
+
+        if (!date || !start || !end) {
+          Swal.showValidationMessage("Tanggal, jam mulai, dan jam selesai wajib diisi.");
+          return false;
+        }
+        if (start >= end) {
+          Swal.showValidationMessage("Jam mulai harus sebelum jam selesai.");
+          return false;
+        }
+        return { classId, subjectId, date, start, end, room };
+      },
+    });
+
+    // ── Kalau user pilih "Hapus Jadwal" ──
+    if (isDenied) {
+      const confirmed = await showConfirm("Hapus Jadwal?", "Jadwal yang sudah dihapus tidak bisa dikembalikan.");
+      if (!confirmed) return;
+
+      const { success, error } = await deleteSchedule(item.id);
+      if (!success) { showError(error); return; }
+
+      showToast("success", "Jadwal berhasil dihapus.");
+      await renderSchedule();
+      return;
+    }
+
+    if (!form) return; // klik Batal
+
+    const { success, error } = await updateSchedule(item.id, {
+      classId:       form.classId,
+      subjectId:     form.subjectId,
+      scheduledDate: form.date,
+      startTime:     form.start,
+      endTime:       form.end,
+      room:          form.room,
+    });
+
+    if (!success) { showError(error); return; }
+
+    showToast("success", "Jadwal berhasil diperbarui.");
+    await renderSchedule();
+  }
+
+  // Cek role dari public.teachers
+  const supabaseForRole = await getSupabaseClient();
+  const { data: myProfile } = await supabaseForRole
+    .from("teachers")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+  const isAdmin = myProfile?.role === "admin";
+
+  await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+  renderNavbar({
+    pageTitle:    "Jadwal Mengajar",
+    pageSubtitle: "Sesi mengajar per bulan",
+    userName,
+  });
+
+  // ── State ──
+  const todayDate = new Date();
+  let currentYear  = todayDate.getFullYear();
+  let currentMonth = todayDate.getMonth(); // 0-based
+  let currentView  = localStorage.getItem("tms-schedule-view") || "week"; // "week"|"list"
+  let scheduleById = {};
+
+  // ── Init ──
+  setViewMode(currentView);
+  await renderSchedule();
+
+  // ── Month nav ──
+  document.getElementById("btn-prev-week").addEventListener("click", async () => {
+    currentMonth--;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    await renderSchedule();
+  });
+  document.getElementById("btn-next-week").addEventListener("click", async () => {
+    currentMonth++;
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    await renderSchedule();
+  });
+  document.getElementById("btn-today").addEventListener("click", async () => {
+    currentYear  = todayDate.getFullYear();
+    currentMonth = todayDate.getMonth();
+    await renderSchedule();
+  });
+
+  // ── View toggle ──
+  document.getElementById("btn-view-week").addEventListener("click", () => {
+    setViewMode("week");
+    renderSchedule();
+  });
+  document.getElementById("btn-view-list").addEventListener("click", () => {
+    setViewMode("list");
+    renderSchedule();
+  });
+
+  function setViewMode(mode) {
+    currentView = mode;
+    localStorage.setItem("tms-schedule-view", mode);
+    document.getElementById("btn-view-week").classList.toggle("active", mode === "week");
+    document.getElementById("btn-view-list").classList.toggle("active", mode === "list");
+  }
+
+  // ── Render utama ──
+  async function renderSchedule() {
+    // Rentang tanggal: hari pertama s/d hari terakhir bulan ini
+    const dateFrom = toISO(new Date(currentYear, currentMonth, 1));
+    const dateTo   = toISO(new Date(currentYear, currentMonth + 1, 0));
+
+    updateMonthLabel(currentYear, currentMonth);
+    showSkeleton();
+
+    const schedules = await getSchedulesByWeek(dateFrom, dateTo);
+
+    scheduleById = {};
+    schedules.forEach((s) => { scheduleById[s.id] = s; });
+
+    // Kelompokkan per tanggal
+    const byDate = {};
+    for (const s of schedules) {
+      if (!byDate[s.scheduled_date]) byDate[s.scheduled_date] = [];
+      byDate[s.scheduled_date].push(s);
+    }
+
+    if (currentView === "week") {
+      renderMonthView(byDate, currentYear, currentMonth);
+    } else {
+      renderListView(byDate, currentYear, currentMonth);
+    }
+
+    lucide.createIcons();
+  }
+
+  // ── Month View ──
+  function renderMonthView(byDate, year, month) {
+    const DAYS_SHORT = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const today      = toISO(new Date());
+
+    // Bangun array minggu: tiap minggu = array 5 hari (Sen–Jum)
+    const weeks  = [];
+    const first  = new Date(year, month, 1);
+    const last   = new Date(year, month + 1, 0);
+
+    // Cari Minggu pertama yang mencakup tanggal 1 bulan ini
+    let cursor = getMinggu(first);
+
+    while (cursor <= last) {
+      const week = [];
+      for (let d = 0; d < 7; d++) {
+        week.push(new Date(cursor));
+        cursor = addDays(cursor, 1);
+      }
+      weeks.push(week);
+    }
+
+    const html = `
+      <div class="month-wrapper">
+        <!-- Header nama hari -->
+        <div class="month-day-headers">
+          ${DAYS_SHORT.map(d => `<div class="month-day-header-cell">${d}</div>`).join("")}
+        </div>
+
+        <!-- Baris per minggu -->
+        ${weeks.map(week => `
+          <div class="month-week-row">
+            ${week.map(date => {
+              const dateStr   = toISO(date);
+              const isToday   = dateStr === today;
+              const isOutside = date.getMonth() !== month;
+              const items     = byDate[dateStr] || [];
+
+              return `
+                <div class="month-day-cell ${isToday ? "is-today" : ""} ${isOutside ? "is-outside" : ""} is-clickable-empty" data-date="${dateStr}">
+                  <div class="month-date-num ${isToday ? "is-today-num" : ""}">
+                    ${date.getDate()}
+                    ${isToday ? '<span class="today-badge">Hari ini</span>' : ""}
+                  </div>
+                  ${items.map(item => {
+                    const status = getStatus(item.start_time, item.end_time, dateStr);
+                    return `
+                      <div
+                        class="month-card status-${status}"
+                        data-id="${item.id}"
+                        data-class="${item.classes?.name ?? ''}"
+                        data-subject="${item.subjects?.name ?? ''}"
+                        data-date="${dateStr}"
+                        title="${item.subjects?.name ?? ''} · ${fmt(item.start_time)}–${fmt(item.end_time)}"
+                      >
+                        <div class="month-card-time">${fmt(item.start_time)}</div>
+                        ${item.subjects?.name ?? "—"}
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+    document.getElementById("schedule-container").innerHTML = html;
+
+    // Klik card jadwal di month view → buka modal Edit Jadwal
+    document.querySelectorAll(".month-card").forEach(card => {
+      card.addEventListener("click", (e) => {
+        e.stopPropagation(); // jangan ikut trigger klik kotak kosong di belakangnya
+        const { id } = card.dataset;
+        const item = scheduleById[id];
+        if (item) openEditScheduleDialog(item);
+      });
+    });
+
+    // Klik kotak kosong (tanpa jadwal) → buka modal Tambah Jadwal dengan tanggal terisi
+    document.querySelectorAll(".month-day-cell.is-clickable-empty").forEach(cell => {
+      cell.style.cursor = "pointer";
+      cell.addEventListener("click", () => {
+        openAddScheduleDialog(cell.dataset.date);
+      });
+    });
+  }
+
+  // ── List View (update: terima year+month, bukan monday) ──
+  function renderListView(byDate, year, month) {
+    const DAYS_ID = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
+    const today   = toISO(new Date());
+    const last    = new Date(year, month + 1, 0).getDate();
+
+    // Cek apakah ada jadwal sama sekali dalam bulan ini
+    const hasAny = Object.values(byDate).some((arr) => arr.length > 0);
+
+    if (!hasAny) {
+      document.getElementById("schedule-container").innerHTML = renderEmptyState();
+      return;
+    }
+
+    let html = "";
+    for (let d = 1; d <= last; d++) {
+      const date    = new Date(year, month, d);
+      const dateStr = toISO(date);
+      const items   = byDate[dateStr] || [];
+      if (items.length === 0) continue;
+
+      const dayName = DAYS_ID[date.getDay() === 0 ? 6 : date.getDay() - 1];
+      const isToday = dateStr === today;
+
+      html += `
+        <div class="list-day-section">
+          <div class="list-day-label">
+            ${dayName}, ${formatDateLong(date)}
+            ${isToday ? '<span class="today-chip">Hari ini</span>' : ''}
+          </div>
+          ${items.map(item => renderListRow(item)).join("")}
+        </div>
+      `;
+    }
+
+    document.getElementById("schedule-container").innerHTML = html || renderEmptyState();
+    bindAttendanceButtons();
+  }
+
+  // ── Card (dipakai di renderListRow via tombol kehadiran) ──
+  function renderCard(item) {
+    const status     = getStatus(item.start_time, item.end_time, item.scheduled_date);
+    const statusMap  = {
+      upcoming: { label: "Mendatang",   cls: "upcoming" },
+      ongoing:  { label: "Berlangsung", cls: "ongoing"  },
+      done:     { label: "Selesai",     cls: "done"     },
+    };
+    const { label, cls } = statusMap[status];
+
+    return `
+      <div class="schedule-card status-${status}">
+        <div class="card-time">${fmt(item.start_time)} – ${fmt(item.end_time)}</div>
+        <div class="card-subject">${item.subjects?.name ?? "—"}</div>
+        <div class="card-class">${item.classes?.name ?? "—"}</div>
+        ${item.room ? `
+          <div class="card-room">
+            <i data-lucide="map-pin" style="width:.65rem;height:.65rem"></i>
+            ${item.room}
+          </div>` : ""}
+        <div><span class="status-badge ${cls}">${label}</span></div>
+
+        ${status !== "upcoming"
+          ? `<button
+               class="btn-attendance not-recorded"
+               data-id="${item.id}"
+               data-class="${item.classes?.name ?? ''}"
+               data-subject="${item.subjects?.name ?? ''}"
+               data-date="${item.scheduled_date}"
+             >
+               <i data-lucide="clipboard-list" style="width:.7rem;height:.7rem"></i>
+               Catat Kehadiran
+             </button>`
+          : `<div style="margin-top:.6rem;font-size:.65rem;color:var(--color-text-muted);text-align:center">
+               Belum dimulai
+             </div>`
+        }
+      </div>
+    `;
+  }
+
+  // ── Row (list view) ──
+  function renderListRow(item) {
+    const status    = getStatus(item.start_time, item.end_time, item.scheduled_date);
+    const statusMap = {
+      upcoming: { label: "Mendatang",   cls: "upcoming" },
+      ongoing:  { label: "Berlangsung", cls: "ongoing"  },
+      done:     { label: "Selesai",     cls: "done"     },
+    };
+    const { label, cls } = statusMap[status];
+
+    return `
+      <div class="list-schedule-row status-${status}">
+        <!-- Waktu -->
+        <div class="list-time-col">
+          <span>${fmt(item.start_time)}</span>
+          <span class="list-time-end">${fmt(item.end_time)}</span>
+        </div>
+
+        <div class="list-divider"></div>
+
+        <!-- Info -->
+        <div class="list-info-col">
+          <div class="list-subject">${item.subjects?.name ?? "—"}</div>
+          <div class="list-meta">
+            ${item.classes?.name ?? "—"}
+            ${item.room ? ` · <i data-lucide="map-pin" style="width:.7rem;height:.7rem;display:inline;vertical-align:middle"></i> ${item.room}` : ""}
+          </div>
+          ${item.notes
+            ? `<div style="font-size:.75rem;color:var(--color-text-muted);margin-top:.25rem;font-style:italic">${item.notes}</div>`
+            : ""}
+        </div>
+
+        <!-- Action -->
+        <div class="list-action-col">
+          <span class="status-badge ${cls}">${label}</span>
+          ${status !== "upcoming"
+            ? `<button
+                 class="btn-attendance not-recorded"
+                 data-id="${item.id}"
+                 data-class="${item.classes?.name ?? ''}"
+                 data-subject="${item.subjects?.name ?? ''}"
+                 data-date="${item.scheduled_date}"
+                 style="white-space:nowrap;padding:.35rem .75rem"
+               >
+                 <i data-lucide="clipboard-list" style="width:.75rem;height:.75rem"></i>
+                 Catat Kehadiran
+               </button>`
+            : ""
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Bind tombol kehadiran ──
+  // Tombol "Catat Kehadiran" → redirect ke attendance.html dengan query param
+  // supaya halaman kehadiran tahu sesi mana yang mau dicatat.
+  function bindAttendanceButtons() {
+    document.querySelectorAll(".btn-attendance").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const { id, class: cls, subject, date } = btn.dataset;
+        const params = new URLSearchParams({ scheduleId: id, className: cls, subjectName: subject, date });
+        window.location.href = `./attendance.html?${params.toString()}`;
+      });
+    });
+  }
+
+  // ── Empty state ──
+  function renderEmptyState() {
+    return `
+      <div class="empty-week">
+        <i data-lucide="calendar-x" style="width:2.5rem;height:2.5rem"></i>
+        <p>Tidak ada jadwal mengajar untuk bulan ini.</p>
+        <p style="font-size:.75rem">Admin dapat menambahkan jadwal melalui halaman manajemen.</p>
+      </div>
+    `;
+  }
+
+  function showSkeleton() {
+    // skeleton old
+    // document.getElementById("schedule-container").innerHTML = `
+    //   <div style="display:flex;flex-direction:column;gap:.5rem">
+    //     ${[...Array(4)].map(() => `
+    //       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem">
+    //         ${[...Array(5)].map(() => `
+    //           <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+    //         `).join("")}
+    //       </div>
+    //     `).join("")}
+    //   </div>
+    // `;
+    document.getElementById("schedule-container").innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem">
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+          <div class="skeleton" style="height:5.5rem;border-radius:.65rem"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Helpers ──
+
+  /** Ambil Senin dari tanggal apapun */
+  function getMinggu(date) {
+    const d   = new Date(date);
+    const day = d.getDay(); // 0=Sun, sudah di hari pertama
+    d.setDate(d.getDate() - day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+
+  function toISO(date) {
+    return date.toISOString().split("T")[0];
+  }
+
+  /** Format "07:30:00" → "07.30" */
+  function fmt(timeStr) {
+    return (timeStr ?? "").slice(0, 5).replace(":", ".");
+  }
+
+  /** Status berdasarkan tanggal + jam sekarang */
+  function getStatus(startTime, endTime, dateStr) {
+    const today  = toISO(new Date());
+    if (dateStr && dateStr < today) return "done";
+    if (dateStr && dateStr > today) return "upcoming";
+    // Hari ini: cek jam
+    const now     = new Date();
+    const nowMin  = now.getHours() * 60 + now.getMinutes();
+    const [sh,sm] = startTime.split(":").map(Number);
+    const [eh,em] = endTime.split(":").map(Number);
+    if (nowMin >= eh * 60 + em) return "done";
+    if (nowMin >= sh * 60 + sm) return "ongoing";
+    return "upcoming";
+  }
+
+  /** Label bulan di navigator, misal "Juni 2025" */
+  function updateMonthLabel(year, month) {
+    const label = new Date(year, month, 1).toLocaleDateString("id-ID", {
+      month: "long", year: "numeric"
+    });
+    document.getElementById("week-label").textContent = label;
+  }
+
+  /** Format tanggal panjang untuk list view, misal "24 Juni 2025" */
+  function formatDateLong(date) {
+    return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+  }
+</script>
+
+</body>
+</html>

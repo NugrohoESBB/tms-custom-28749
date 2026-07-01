@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kehadiran — Teacher Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../../assets/css/attendance.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-bg) 50%,
+        var(--color-border) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 0.4rem;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+
+  <!-- Terapkan dark mode sebelum render untuk menghindari flash -->
+  <script>
+    (function () {
+      const t = localStorage.getItem("tms-theme") || "light";
+      if (t === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+</head>
+<body>
+
+<div class="dashboard-shell" id="dashboard-shell">
+
+  <div id="sidebar-root"></div>
+
+  <div class="dashboard-main">
+    <div id="navbar-root"></div>
+
+    <main class="dashboard-content">
+
+      <!-- Page Header -->
+      <!-- Page Header -->
+      <div class="mb-5" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div>
+          <h2 class="text-xl font-bold">Kehadiran Siswa</h2>
+          <p class="text-sm mt-0.5" style="color: var(--color-text-muted)">
+            Pilih sesi untuk mencatat atau melihat rekap kehadiran.
+          </p>
+        </div>
+        <!-- Tombol kembali ke list (muncul saat form absen terbuka) -->
+        <button
+          id="btn-back-to-list"
+          onclick="backToScheduleList()"
+          style="display:none;align-items:center;gap:.4rem;padding:.45rem .9rem;border-radius:.55rem;border:1.5px solid var(--color-border);background:var(--color-surface);font-size:.8125rem;font-weight:600;color:var(--color-text-muted);cursor:pointer"
+        >
+          <i data-lucide="arrow-left" style="width:.85rem;height:.85rem"></i>
+          Kembali ke Daftar Sesi
+        </button>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-sesi" onclick="switchTab('sesi')">
+          <i data-lucide="calendar-clock" style="width:.9rem;height:.9rem"></i>
+          Sesi Mengajar
+        </button>
+        <button class="tab-btn" id="tab-rekap" onclick="switchTab('rekap')">
+          <i data-lucide="bar-chart-2" style="width:.9rem;height:.9rem"></i>
+          Rekap
+        </button>
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           TAB 1: SESI MENGAJAR
+           (list jadwal + form absen in-page)
+           ══════════════════════════════════════════════ -->
+      <div id="panel-sesi" class="tab-panel active">
+
+        <!-- ── VIEW A: Daftar Sesi ── -->
+        <div id="schedule-list-view">
+
+          <!-- Skeleton old -->
+          <!-- <div id="schedule-skeleton">
+            ${Array(4).fill(0).map(() => `
+            <div class="card-soft mb-3 p-4" style="display:flex;gap:1rem;align-items:center">
+                <div class="skeleton" style="width:3rem;height:3rem;border-radius:.65rem;flex-shrink:0"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:.4rem">
+                  <div class="skeleton" style="height:1rem;width:40%"></div>
+                  <div class="skeleton" style="height:.8rem;width:60%"></div>
+                </div>
+                <div class="skeleton" style="height:2rem;width:6rem;border-radius:.45rem"></div>
+              </div>
+            `).join("")}
+          </div> -->
+          
+          <!-- Skeleton -->
+          <div id="schedule-skeleton">
+            <div class="card-soft mb-3 p-4" style="display:flex;gap:1rem;align-items:center">
+              <div class="skeleton" style="width:3rem;height:3rem;border-radius:.65rem;flex-shrink:0"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:.4rem">
+                <div class="skeleton" style="height:1rem;width:40%"></div>
+                <div class="skeleton" style="height:.8rem;width:60%"></div>
+              </div>
+              <div class="skeleton" style="height:2rem;width:6rem;border-radius:.45rem"></div>
+            </div>
+            <div class="card-soft mb-3 p-4" style="display:flex;gap:1rem;align-items:center">
+              <div class="skeleton" style="width:3rem;height:3rem;border-radius:.65rem;flex-shrink:0"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:.4rem">
+                <div class="skeleton" style="height:1rem;width:40%"></div>
+                <div class="skeleton" style="height:.8rem;width:60%"></div>
+              </div>
+              <div class="skeleton" style="height:2rem;width:6rem;border-radius:.45rem"></div>
+            </div>
+            <div class="card-soft mb-3 p-4" style="display:flex;gap:1rem;align-items:center">
+              <div class="skeleton" style="width:3rem;height:3rem;border-radius:.65rem;flex-shrink:0"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:.4rem">
+                <div class="skeleton" style="height:1rem;width:40%"></div>
+                <div class="skeleton" style="height:.8rem;width:60%"></div>
+              </div>
+              <div class="skeleton" style="height:2rem;width:6rem;border-radius:.45rem"></div>
+            </div>
+            <div class="card-soft mb-3 p-4" style="display:flex;gap:1rem;align-items:center">
+              <div class="skeleton" style="width:3rem;height:3rem;border-radius:.65rem;flex-shrink:0"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:.4rem">
+                <div class="skeleton" style="height:1rem;width:40%"></div>
+                <div class="skeleton" style="height:.8rem;width:60%"></div>
+              </div>
+              <div class="skeleton" style="height:2rem;width:6rem;border-radius:.45rem"></div>
+            </div>
+          </div>
+
+          <!-- Grup: Berlangsung Sekarang -->
+          <div id="group-ongoing" style="display:none">
+            <div class="sesi-group-label">
+              <span class="sesi-group-dot dot-ongoing"></span>
+              Berlangsung Sekarang
+            </div>
+            <div id="list-ongoing"></div>
+          </div>
+
+          <!-- Grup: Mendatang -->
+          <div id="group-upcoming" style="display:none">
+            <div class="sesi-group-label">
+              <span class="sesi-group-dot dot-upcoming"></span>
+              Mendatang
+            </div>
+            <div id="list-upcoming"></div>
+          </div>
+
+          <!-- Grup: Selesai -->
+          <div id="group-done" style="display:none">
+            <div class="sesi-group-label">
+              <span class="sesi-group-dot dot-done"></span>
+              Selesai
+            </div>
+            <div id="list-done"></div>
+          </div>
+
+          <!-- Empty state -->
+          <div id="schedule-list-empty" style="display:none">
+            <div class="attendance-empty card-soft">
+              <i data-lucide="calendar-x" style="width:2.5rem;height:2.5rem"></i>
+              <p>Belum ada jadwal mengajar yang tersedia.</p>
+              <p style="font-size:.75rem">Tambahkan jadwal melalui halaman Jadwal.</p>
+              <a href="./schedule.html" class="btn-go-schedule" style="margin-top:.5rem">
+                <i data-lucide="calendar-days" style="width:.875rem;height:.875rem"></i>
+                Buka Halaman Jadwal
+              </a>
+            </div>
+          </div>
+
+        </div><!-- /schedule-list-view -->
+
+        <!-- ── VIEW B: Form Absen (in-page, menggantikan list) ── -->
+        <div id="attendance-view" style="display:none">
+
+          <!-- Info sesi -->
+          <div class="session-context" id="session-context">
+            <div class="session-context-icon">
+              <i data-lucide="book-open" style="width:1rem;height:1rem"></i>
+            </div>
+            <div class="session-context-info">
+              <div class="session-context-title" id="ctx-subject">—</div>
+              <div class="session-context-sub" id="ctx-detail">—</div>
+            </div>
+          </div>
+
+          <!-- Banner sudah pernah dicatat -->
+          <div id="recorded-banner" class="recorded-banner" style="display:none">
+            <i data-lucide="check-circle-2" style="width:1rem;height:1rem;flex-shrink:0"></i>
+            Kehadiran sesi ini sudah pernah dicatat. Kamu bisa mengubah dan menyimpan ulang.
+          </div>
+
+          <!-- Summary pills -->
+          <div class="summary-pills" id="summary-pills">
+            <span class="summary-pill hadir"><span id="count-hadir">0</span> Hadir</span>
+            <span class="summary-pill izin"><span id="count-izin">0</span> Izin</span>
+            <span class="summary-pill sakit"><span id="count-sakit">0</span> Sakit</span>
+            <span class="summary-pill alpha"><span id="count-alpha">0</span> Alpha</span>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <button class="quick-action-btn" onclick="markAll('hadir')">
+              <i data-lucide="check-circle" style="width:.8rem;height:.8rem;color:var(--color-success)"></i>
+              Semua Hadir
+            </button>
+            <button class="quick-action-btn" onclick="markAll('alpha')">
+              <i data-lucide="x-circle" style="width:.8rem;height:.8rem;color:var(--color-danger)"></i>
+              Semua Alpha
+            </button>
+            <div style="flex:1"></div>
+            <input
+              type="search"
+              id="student-search"
+              class="student-search"
+              placeholder="Cari nama siswa..."
+              oninput="filterStudents(this.value)"
+              style="max-width:220px;margin-bottom:0"
+            />
+          </div>
+
+          <!-- Skeleton tabel -->
+          <div id="table-skeleton">
+            <div class="student-table-wrapper">
+              <table class="student-table">
+                <thead>
+                  <tr><th>No.</th><th>Nama Siswa</th><th>Status</th><th>Catatan</th></tr>
+                </thead>
+                <tbody>
+                  <!-- ${Array(5).fill(0).map(() => `
+                    <tr>
+                      <td><div class="skeleton" style="height:1rem;width:1.5rem"></div></td>
+                      <td><div class="skeleton" style="height:1rem;width:8rem"></div></td>
+                      <td><div class="skeleton" style="height:1.5rem;width:12rem"></div></td>
+                      <td><div class="skeleton" style="height:1.5rem;width:6rem"></div></td>
+                    </tr>
+                  `).join("")} -->
+                  <tr>
+                    <td><div class="skeleton" style="height:1rem;width:1.5rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:8rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:12rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:6rem"></div></td>
+                  </tr>
+                  <tr>
+                    <td><div class="skeleton" style="height:1rem;width:1.5rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:8rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:12rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:6rem"></div></td>
+                  </tr>
+                  <tr>
+                    <td><div class="skeleton" style="height:1rem;width:1.5rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:8rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:12rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:6rem"></div></td>
+                  </tr>
+                  <tr>
+                    <td><div class="skeleton" style="height:1rem;width:1.5rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:8rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:12rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:6rem"></div></td>
+                  </tr>
+                  <tr>
+                    <td><div class="skeleton" style="height:1rem;width:1.5rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:8rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:12rem"></div></td>
+                    <td><div class="skeleton" style="height:1.5rem;width:6rem"></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Tabel siswa -->
+          <div id="student-table-container" style="display:none">
+            <div class="student-table-wrapper">
+              <table class="student-table" id="student-table">
+                <thead>
+                  <tr>
+                    <th style="width:3rem">No.</th>
+                    <th>Nama Siswa</th>
+                    <th style="width:18rem">Status Kehadiran</th>
+                    <th style="width:12rem">Catatan</th>
+                  </tr>
+                </thead>
+                <tbody id="student-tbody"></tbody>
+              </table>
+            </div>
+
+            <button id="btn-save" class="btn-save-attendance" onclick="saveAttendanceData()">
+              <span class="btn-text flex items-center gap-2">
+                <i data-lucide="save" style="width:1rem;height:1rem"></i>
+                Simpan Kehadiran
+              </span>
+              <span class="btn-spinner" style="display:none"></span>
+            </button>
+          </div>
+
+          <!-- Empty: tidak ada siswa -->
+          <div id="no-students-view" style="display:none">
+            <div class="attendance-empty card-soft">
+              <i data-lucide="users" style="width:2.5rem;height:2.5rem"></i>
+              <p>Belum ada siswa terdaftar di kelas ini.</p>
+            </div>
+          </div>
+
+        </div><!-- /attendance-view -->
+
+      </div><!-- /panel-sesi -->
+
+
+      <!-- ══════════════════════════════════════════════
+           TAB 2: REKAP KEHADIRAN
+           ══════════════════════════════════════════════ -->
+      <div id="panel-rekap" class="tab-panel">
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <select id="filter-class" class="filter-select" onchange="loadRekap()">
+            <option value="">Semua Kelas</option>
+            <!-- Diisi oleh JS -->
+          </select>
+
+          <input
+            type="date"
+            id="filter-date-from"
+            class="filter-input"
+            onchange="loadRekap()"
+          />
+          <span style="font-size:.8rem;color:var(--color-text-muted)">s/d</span>
+          <input
+            type="date"
+            id="filter-date-to"
+            class="filter-input"
+            onchange="loadRekap()"
+          />
+
+          <button
+            onclick="clearRekapFilter()"
+            style="font-size:.78rem;font-weight:600;color:var(--color-text-muted);cursor:pointer;background:none;border:none;padding:.35rem .5rem"
+          >
+            Reset
+          </button>
+        </div>
+
+        <!-- Rekap skeleton -->
+        <div id="rekap-skeleton">
+          <div class="rekap-table-wrapper">
+            <table class="rekap-table">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Sesi</th>
+                  <th>Kelas</th>
+                  <th>Siswa</th>
+                  <th>Status</th>
+                  <th>Catatan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- ${Array(6).fill(0).map(() => `
+                  <tr>
+                    <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                    <td><div class="skeleton" style="height:1.4rem;width:4rem;border-radius:99px"></div></td>
+                    <td><div class="skeleton" style="height:1rem;width:6rem"></div></td>
+                  </tr>
+                `).join("")} -->
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1.4rem;width:4rem;border-radius:99px"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:6rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1.4rem;width:4rem;border-radius:99px"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:6rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1.4rem;width:4rem;border-radius:99px"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:6rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1.4rem;width:4rem;border-radius:99px"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:6rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1.4rem;width:4rem;border-radius:99px"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:6rem"></div></td>
+                </tr>
+                <tr>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:5rem"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:7rem"></div></td>
+                  <td><div class="skeleton" style="height:1.4rem;width:4rem;border-radius:99px"></div></td>
+                  <td><div class="skeleton" style="height:1rem;width:6rem"></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Rekap tabel -->
+        <div id="rekap-table-container" style="display:none">
+          <div class="rekap-table-wrapper">
+            <table class="rekap-table">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Sesi</th>
+                  <th>Kelas</th>
+                  <th>Siswa</th>
+                  <th>Status</th>
+                  <th>Catatan</th>
+                </tr>
+              </thead>
+              <tbody id="rekap-tbody">
+                <!-- Diisi oleh JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="rekap-empty" style="display:none">
+          <div class="attendance-empty card-soft">
+            <i data-lucide="file-x" style="width:2.5rem;height:2.5rem"></i>
+            <p>Belum ada data kehadiran untuk filter yang dipilih.</p>
+          </div>
+        </div>
+
+      </div><!-- /panel-rekap -->
+
+    </main>
+  </div>
+</div>
+
+
+<script type="module">
+  import { renderSidebar }     from "../../components/sidebar.component.js";
+  import { renderNavbar }      from "../../components/navbar.component.js";
+  import { getCurrentSession } from "../../services/auth.service.js";
+  import {
+    getStudentsBySchedule,
+    saveAttendance,
+    getAttendanceHistory,
+    getClasses,
+    getSchedulesForAttendance,
+  } from "../../services/attendance.service.js";
+  import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
+  import { getSupabaseClient } from "../../services/supabase.service.js";
+
+  const session = await getCurrentSession();
+  if (!session) window.location.href = "../auth/login.html";
+
+  const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+  // Cek role dari public.teachers
+  const supabaseForRole = await getSupabaseClient();
+  const { data: myProfile } = await supabaseForRole
+    .from("teachers")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+  const isAdmin = myProfile?.role === "admin";
+
+  await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+  renderNavbar({
+    pageTitle:    "Kehadiran",
+    pageSubtitle: "Catat dan rekap kehadiran siswa",
+    userName,
+  });
+
+  window._scheduleId = null;
+  window._students   = [];
+  const LABEL = { hadir: "Hadir", izin: "Izin", sakit: "Sakit", alpha: "Alpha" };
+
+  await initSesiTab();
+  await initRekapTab();
+  lucide.createIcons();
+
+  // ══════════════════════════════════════════════
+  // TAB: SESI MENGAJAR (list jadwal + form absen)
+  // ══════════════════════════════════════════════
+
+  async function initSesiTab() {
+    const schedules = await getSchedulesForAttendance();
+
+    document.getElementById("schedule-skeleton").style.display = "none";
+
+    if (!schedules || schedules.length === 0) {
+      document.getElementById("schedule-list-empty").style.display = "block";
+      return;
+    }
+
+    const now = new Date();
+
+    const ongoing  = [];
+    const upcoming = [];
+    const done     = [];
+
+    schedules.forEach((s) => {
+      const start = new Date(`${s.scheduled_date}T${s.start_time}`);
+      const end   = new Date(`${s.scheduled_date}T${s.end_time}`);
+
+      if (now >= start && now <= end) {
+        ongoing.push(s);
+      } else if (start > now) {
+        upcoming.push(s);
+      } else {
+        done.push(s);
+      }
+    });
+
+    // Urutkan mendatang dari yang paling dekat
+    upcoming.sort((a, b) =>
+      new Date(`${a.scheduled_date}T${a.start_time}`) -
+      new Date(`${b.scheduled_date}T${b.start_time}`)
+    );
+
+    if (ongoing.length > 0) {
+      document.getElementById("group-ongoing").style.display = "block";
+      document.getElementById("list-ongoing").innerHTML =
+        ongoing.map((s) => renderScheduleCard(s, "ongoing")).join("");
+    }
+    if (upcoming.length > 0) {
+      document.getElementById("group-upcoming").style.display = "block";
+      document.getElementById("list-upcoming").innerHTML =
+        upcoming.map((s) => renderScheduleCard(s, "upcoming")).join("");
+    }
+    if (done.length > 0) {
+      document.getElementById("group-done").style.display = "block";
+      document.getElementById("list-done").innerHTML =
+        done.map((s) => renderScheduleCard(s, "done")).join("");
+    }
+
+    lucide.createIcons();
+  }
+
+  function renderScheduleCard(s, type) {
+    const dateStr = new Date(`${s.scheduled_date}T00:00:00`).toLocaleDateString("id-ID", {
+      weekday: "short", day: "numeric", month: "short", year: "numeric"
+    });
+    const timeStr = `${s.start_time?.slice(0,5)} – ${s.end_time?.slice(0,5)}`;
+    const recorded = s.attendanceCount > 0;
+    const canAbsen = type === "ongoing" || type === "done";
+
+    const recordedBadge = recorded
+      ? `<span style="display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;font-weight:700;color:var(--color-success);background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:99px;padding:.15rem .5rem">
+           <i data-lucide="check" style="width:.7rem;height:.7rem"></i> Sudah Diabsen
+         </span>`
+      : `<span style="display:inline-flex;align-items:center;gap:.3rem;font-size:.7rem;font-weight:700;color:var(--color-text-muted);background:var(--color-bg);border:1px solid var(--color-border);border-radius:99px;padding:.15rem .5rem">
+           Belum Diabsen
+         </span>`;
+
+    const btnAbsen = canAbsen
+      ? `<button
+           onclick="openAttendanceForm('${s.id}','${(s.subjects?.name ?? '').replace(/'/g,"\\'")}','${(s.classes?.name ?? '').replace(/'/g,"\\'")}','${s.scheduled_date}')"
+           style="display:flex;align-items:center;gap:.35rem;padding:.4rem .85rem;border-radius:.45rem;background:var(--color-primary);color:white;font-size:.78rem;font-weight:700;border:none;cursor:pointer;white-space:nowrap;flex-shrink:0"
+         >
+           <i data-lucide="clipboard-list" style="width:.8rem;height:.8rem"></i>
+           ${recorded ? "Edit Absen" : "Absen"}
+         </button>`
+      : `<span style="font-size:.75rem;color:var(--color-text-muted);font-weight:500;flex-shrink:0">Belum dimulai</span>`;
+
+    return `
+      <div class="card-soft mb-3 p-4" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <!-- Icon kiri -->
+        <div style="width:2.75rem;height:2.75rem;border-radius:.65rem;background:rgba(37,99,235,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--color-primary)">
+          <i data-lucide="book-open" style="width:1.1rem;height:1.1rem"></i>
+        </div>
+        <!-- Info -->
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.9rem;color:var(--color-text)">${s.subjects?.name ?? '—'}</div>
+          <div style="font-size:.78rem;color:var(--color-text-muted);margin-top:.1rem">
+            ${s.classes?.name ?? '—'}
+            <span style="margin:0 .3rem">·</span>
+            ${dateStr}
+            <span style="margin:0 .3rem">·</span>
+            ${timeStr}
+            ${s.room ? `<span style="margin:0 .3rem">·</span> ${s.room}` : ""}
+          </div>
+          <div style="margin-top:.4rem">${recordedBadge}</div>
+        </div>
+        <!-- Aksi -->
+        ${btnAbsen}
+      </div>
+    `;
+  }
+
+  // Buka form absen (in-page: sembunyikan list, tampilkan form)
+  window.openAttendanceForm = async function(scheduleId, subjectName, className, date) {
+    window._scheduleId = scheduleId;
+    window._students   = [];
+
+    // Sembunyikan list, tampilkan form
+    document.getElementById("schedule-list-view").style.display  = "none";
+    document.getElementById("attendance-view").style.display     = "block";
+    document.getElementById("btn-back-to-list").style.display    = "flex";
+
+    // Reset state form
+    document.getElementById("recorded-banner").style.display         = "none";
+    document.getElementById("table-skeleton").style.display          = "block";
+    document.getElementById("student-table-container").style.display = "none";
+    document.getElementById("no-students-view").style.display        = "none";
+
+    // Isi info sesi
+    const dateFormatted = date
+      ? new Date(date + "T00:00:00").toLocaleDateString("id-ID", {
+          weekday: "long", day: "numeric", month: "long", year: "numeric"
+        })
+      : "—";
+    document.getElementById("ctx-subject").textContent = subjectName;
+    document.getElementById("ctx-detail").textContent  = `${className}  ·  ${dateFormatted}`;
+
+    // Reset count pills
+    ["hadir","izin","sakit","alpha"].forEach((s) => {
+      document.getElementById(`count-${s}`).textContent = "0";
+    });
+
+    // Fetch siswa
+    const { students, alreadyRecorded } = await getStudentsBySchedule(scheduleId);
+
+    document.getElementById("table-skeleton").style.display = "none";
+
+    if (students.length === 0) {
+      document.getElementById("no-students-view").style.display = "block";
+      lucide.createIcons();
+      return;
+    }
+
+    if (alreadyRecorded) {
+      document.getElementById("recorded-banner").style.display = "flex";
+    }
+
+    window._students = students.map((s) => ({ ...s }));
+    renderStudentTable(window._students);
+    updateSummary();
+
+    document.getElementById("student-table-container").style.display = "block";
+    lucide.createIcons();
+  };
+
+  // Kembali ke daftar sesi
+  window.backToScheduleList = function() {
+    document.getElementById("attendance-view").style.display    = "none";
+    document.getElementById("schedule-list-view").style.display = "block";
+    document.getElementById("btn-back-to-list").style.display   = "none";
+    window._scheduleId = null;
+    window._students   = [];
+  };
+
+  // ── Render tabel siswa ──
+  function renderStudentTable(students) {
+    const tbody = document.getElementById("student-tbody");
+    tbody.innerHTML = students.map((s, i) => `
+      <tr id="row-${s.id}" class="status-${s.status}">
+        <td class="student-number text-center">${i + 1}</td>
+        <td>
+          <div class="student-name">${s.full_name}</div>
+          ${s.nis ? `<div class="student-number">${s.nis}</div>` : ""}
+        </td>
+        <td>
+          <div class="status-toggle" id="toggle-${s.id}">
+            ${["hadir","izin","sakit","alpha"].map((st) => `
+              <button
+                class="status-btn ${s.status === st ? `active-${st}` : ""}"
+                onclick="setStatus('${s.id}','${st}')"
+                data-status="${st}"
+              >${LABEL[st]}</button>
+            `).join("")}
+          </div>
+        </td>
+        <td>
+          <input
+            type="text"
+            class="notes-input"
+            placeholder="Catatan (opsional)"
+            value="${s.notes ?? ""}"
+            oninput="setNotes('${s.id}', this.value)"
+            maxlength="100"
+          />
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  window.setStatus = function(studentId, status) {
+    const student = window._students.find((s) => s.id === studentId);
+    if (!student) return;
+    student.status = status;
+    const row = document.getElementById(`row-${studentId}`);
+    row.className = `status-${status}`;
+    document.getElementById(`toggle-${studentId}`)
+      .querySelectorAll(".status-btn").forEach((btn) => {
+        const st = btn.dataset.status;
+        btn.className = `status-btn${status === st ? ` active-${st}` : ""}`;
+      });
+    updateSummary();
+  };
+
+  window.setNotes = function(studentId, notes) {
+    const student = window._students.find((s) => s.id === studentId);
+    if (student) student.notes = notes;
+  };
+
+  window.markAll = function(status) {
+    window._students.forEach((s) => {
+      s.status = status;
+      const row = document.getElementById(`row-${s.id}`);
+      if (row) row.className = `status-${status}`;
+      document.getElementById(`toggle-${s.id}`)
+        ?.querySelectorAll(".status-btn").forEach((btn) => {
+          const st = btn.dataset.status;
+          btn.className = `status-btn${status === st ? ` active-${st}` : ""}`;
+        });
+    });
+    updateSummary();
+  };
+
+  window.filterStudents = function(query) {
+    const q = query.toLowerCase().trim();
+    document.querySelectorAll("#student-tbody tr").forEach((row) => {
+      const name = row.querySelector(".student-name")?.textContent?.toLowerCase() ?? "";
+      row.style.display = name.includes(q) ? "" : "none";
+    });
+  };
+
+  function updateSummary() {
+    const counts = { hadir: 0, izin: 0, sakit: 0, alpha: 0 };
+    window._students.forEach((s) => { counts[s.status] = (counts[s.status] || 0) + 1; });
+    Object.keys(counts).forEach((k) => {
+      document.getElementById(`count-${k}`).textContent = counts[k];
+    });
+  }
+
+  window.saveAttendanceData = async function() {
+    const btn = document.getElementById("btn-save");
+    const confirmed = await showConfirm(
+      "Simpan kehadiran?",
+      `${window._students.length} siswa akan dicatat untuk sesi ini.`
+    );
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    btn.querySelector(".btn-text").style.visibility = "hidden";
+    btn.querySelector(".btn-spinner").style.display  = "inline-block";
+
+    const records = window._students.map((s) => ({
+      studentId: s.id,
+      status:    s.status,
+      notes:     s.notes ?? "",
+    }));
+
+    const { success, error } = await saveAttendance(window._scheduleId, records);
+
+    btn.disabled = false;
+    btn.querySelector(".btn-text").style.visibility = "";
+    btn.querySelector(".btn-spinner").style.display  = "none";
+
+    if (!success) {
+      showError(error || "Gagal menyimpan kehadiran. Coba lagi.");
+      return;
+    }
+
+    showToast("success", "Kehadiran berhasil disimpan!");
+    document.getElementById("recorded-banner").style.display = "flex";
+    lucide.createIcons();
+  };
+
+  // ══════════════════════════════════════════════
+  // TAB: REKAP
+  // ══════════════════════════════════════════════
+
+  async function loadRekap() {
+    document.getElementById("rekap-skeleton").style.display        = "block";
+    document.getElementById("rekap-table-container").style.display = "none";
+    document.getElementById("rekap-empty").style.display           = "none";
+
+    const filters = {
+      classId:  document.getElementById("filter-class").value     || undefined,
+      dateFrom: document.getElementById("filter-date-from").value || undefined,
+      dateTo:   document.getElementById("filter-date-to").value   || undefined,
+    };
+
+    const history = await getAttendanceHistory(filters);
+    document.getElementById("rekap-skeleton").style.display = "none";
+
+    if (!history || history.length === 0) {
+      document.getElementById("rekap-empty").style.display = "block";
+      return;
+    }
+
+    const tbody = document.getElementById("rekap-tbody");
+    tbody.innerHTML = history.map((row) => {
+      const schedule = row.schedules;
+      const student  = row.students;
+      if (!schedule || !student) return "";
+
+      const dateStr = schedule.scheduled_date
+        ? new Date(schedule.scheduled_date + "T00:00:00").toLocaleDateString("id-ID", {
+            day: "2-digit", month: "short", year: "numeric"
+          })
+        : "—";
+
+      const timeStr = schedule.start_time && schedule.end_time
+        ? `${schedule.start_time.slice(0,5)} – ${schedule.end_time.slice(0,5)}`
+        : "—";
+
+      return `
+        <tr>
+          <td style="white-space:nowrap">${dateStr}</td>
+          <td>
+            <div style="font-weight:600;font-size:.8125rem">${schedule.subjects?.name ?? "—"}</div>
+            <div style="font-size:.73rem;color:var(--color-text-muted)">${timeStr}</div>
+          </td>
+          <td>${schedule.classes?.name ?? "—"}</td>
+          <td>
+            <div style="font-weight:600">${student.full_name}</div>
+            ${student.nis
+              ? `<div style="font-size:.73rem;color:var(--color-text-muted)">${student.nis}</div>`
+              : ""}
+          </td>
+          <td><span class="status-badge ${row.status}">${LABEL[row.status] ?? row.status}</span></td>
+          <td style="color:var(--color-text-muted);font-size:.8rem">${row.notes || "—"}</td>
+        </tr>
+      `;
+    }).join("");
+
+    document.getElementById("rekap-table-container").style.display = "block";
+    lucide.createIcons();
+  }
+
+  async function initRekapTab() {
+    const classes = await getClasses();
+    const select  = document.getElementById("filter-class");
+    classes.forEach((c) => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+
+    const today   = new Date();
+    const month30 = new Date(today);
+    month30.setDate(today.getDate() - 30);
+
+    document.getElementById("filter-date-to").value   = toISO(today);
+    document.getElementById("filter-date-from").value = toISO(month30);
+
+    await loadRekap();
+  }
+
+  function clearRekapFilter() {
+    document.getElementById("filter-class").value = "";
+    const today   = new Date();
+    const month30 = new Date(today);
+    month30.setDate(today.getDate() - 30);
+    document.getElementById("filter-date-to").value   = toISO(today);
+    document.getElementById("filter-date-from").value = toISO(month30);
+    loadRekap();
+  }
+
+  function toISO(date) { return date.toISOString().split("T")[0]; }
+
+  window.loadRekap        = loadRekap;
+  window.clearRekapFilter = clearRekapFilter;
+</script>
+
+<!-- Tab switcher (non-module supaya bisa dipanggil dari onclick) -->
+<script>
+  function switchTab(tab) {
+    ["sesi", "rekap"].forEach((t) => {
+      document.getElementById(`tab-${t}`).classList.toggle("active", t === tab);
+      document.getElementById(`panel-${t}`).classList.toggle("active", t === tab);
+    });
+  }
+</script>
+
+</body>
+</html>

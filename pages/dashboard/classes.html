@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelas — Teacher Management System</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../../assets/css/classes.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem("tms-theme") || "light";
+      if (t === "dark") document.documentElement.classList.add("dark");
+    })();
+  </script>
+</head>
+<body>
+
+<div class="dashboard-shell" id="dashboard-shell">
+
+  <div id="sidebar-root"></div>
+
+  <div class="dashboard-main">
+    <div id="navbar-root"></div>
+
+    <main class="dashboard-content">
+
+      <!-- ── Page header ── -->
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-xl font-bold">Data Kelas</h2>
+          <p class="text-sm mt-0.5" style="color:var(--color-text-muted)">
+            Lihat dan kelola semua kelas yang ada di sekolah.
+          </p>
+        </div>
+        <button class="btn-add-class" id="btn-add-class">
+          <i data-lucide="plus" style="width:.875rem;height:.875rem"></i>
+          Tambah Kelas
+        </button>
+      </div>
+
+      <!-- ── Stat bar ── -->
+      <div class="class-stat-bar" id="stat-bar">
+        <!-- Skeleton diisi oleh JS -->
+      </div>
+
+      <!-- ── Toolbar ── -->
+      <div class="classes-toolbar">
+        <div class="search-wrapper">
+          <i data-lucide="search" class="search-icon" style="width:.875rem;height:.875rem"></i>
+          <input
+            type="text"
+            id="search-input"
+            class="classes-search"
+            placeholder="Cari nama kelas..."
+          />
+        </div>
+
+        <select id="filter-grade" class="classes-filter-select">
+          <option value="">Semua Tingkat Kelas</option>
+          <!-- Diisi JS dari localStorage -->
+        </select>
+
+        <!-- View toggle: Grid / List -->
+        <div class="view-toggle" id="view-toggle">
+          <button class="view-toggle-btn active" id="btn-view-grid" title="Tampilan Kartu">
+            <i data-lucide="layout-grid" style="width:.875rem;height:.875rem"></i>
+          </button>
+          <button class="view-toggle-btn" id="btn-view-list" title="Tampilan Tabel">
+            <i data-lucide="list" style="width:.875rem;height:.875rem"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Konten utama (diisi JS) ── -->
+      <div id="classes-container">
+        <!-- Skeleton awal -->
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Tambah / Edit Kelas
+     ============================================================ -->
+<div class="modal-overlay" id="class-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-title">Tambah Kelas</h3>
+      <button class="modal-close" id="modal-close">
+        <i data-lucide="x" style="width:.9rem;height:.9rem"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Nama kelas & Tingkat (2 kolom) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">
+            Nama Kelas <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="field-name"
+            class="form-input"
+            placeholder="Contoh: X-IPA 1"
+          />
+          <p class="form-error" id="err-name"></p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            Tingkat Kelas <span class="required">*</span>
+          </label>
+          <select id="field-grade" class="form-select">
+            <option value="">— Pilih —</option>
+            <!-- Diisi JS dari localStorage -->
+          </select>
+          <p class="form-error" id="err-grade"></p>
+        </div>
+      </div>
+
+      <!-- Wali Kelas -->
+      <div class="form-group">
+        <label class="form-label">Wali Kelas</label>
+        <select id="field-homeroom" class="form-select">
+          <option value="">— Tidak ada / belum ditentukan —</option>
+          <!-- Diisi JS dari tabel teachers -->
+        </select>
+        <p class="form-error" id="err-homeroom"></p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" id="modal-cancel">Batal</button>
+      <button class="btn-modal-save" id="modal-save">
+        <i data-lucide="save" style="width:.8rem;height:.8rem"></i>
+        <span id="modal-save-text">Simpan</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DETAIL DRAWER: Info lengkap kelas
+     ============================================================ -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<aside class="detail-drawer" id="detail-drawer">
+  <div class="drawer-header">
+    <span class="drawer-title">Detail Kelas</span>
+    <button class="drawer-close" id="drawer-close">
+      <i data-lucide="x" style="width:.9rem;height:.9rem"></i>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawer-body">
+    <!-- Diisi JS -->
+  </div>
+</aside>
+
+
+<!-- ============================================================
+     SCRIPT
+     ============================================================ -->
+<script type="module">
+  import { qs, getCurrentAcademicYear } from "../../helpers/dom.helper.js";
+  import { renderSidebar }     from "../../components/sidebar.component.js";
+  import { renderNavbar }      from "../../components/navbar.component.js";
+  import { getCurrentSession } from "../../services/auth.service.js";
+  import { getSupabaseClient } from "../../services/supabase.service.js";
+  import { showToast, showConfirm, showError } from "../../utils/notification.util.js";
+
+  // ── Auth guard ──
+  const session = await getCurrentSession();
+  if (!session) { window.location.href = "../auth/login.html"; }
+
+  const userName = session?.user?.user_metadata?.full_name || "Guru";
+
+  // Cek role dari public.teachers
+  const supabaseForRole = await getSupabaseClient();
+  const { data: myProfile } = await supabaseForRole
+    .from("teachers")
+    .select("role")
+    .eq("id", session.user.id)
+    .single();
+  const isAdmin = myProfile?.role === "admin";
+
+  await renderSidebar({ userName, userRole: isAdmin ? "Admin" : "Pengajar", isAdmin });
+  renderNavbar({
+    pageTitle:    "Data Kelas",
+    pageSubtitle: "Manajemen kelas",
+    userName,
+  });
+
+  // ── Render skeleton awal ──
+  qs("#stat-bar").innerHTML = [...Array(4)].map(() => `
+    <div class="class-stat-card">
+      <div class="skeleton class-stat-icon" style="width:2.25rem;height:2.25rem;border-radius:.55rem"></div>
+      <div style="flex:1">
+        <div class="skeleton skeleton-text" style="width:2.5rem"></div>
+        <div class="skeleton skeleton-sub" style="width:4rem"></div>
+      </div>
+    </div>
+  `).join("");
+
+  qs("#classes-container").innerHTML = `
+    <div class="classes-grid">
+      ${[...Array(6)].map(() => `
+        <div class="class-card grade-other" style="pointer-events:none">
+          <div class="class-card-header">
+            <div class="skeleton class-stat-icon" style="width:2.5rem;height:2.5rem;border-radius:.6rem"></div>
+          </div>
+          <div class="skeleton skeleton-text" style="width:7rem;margin-bottom:.4rem"></div>
+          <div class="skeleton skeleton-sub" style="width:3rem;margin-bottom:.875rem"></div>
+          <div class="class-card-divider"></div>
+          <div class="class-card-footer">
+            <div class="skeleton skeleton-sub" style="width:5rem"></div>
+            <div class="skeleton skeleton-sub" style="width:6rem"></div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  // ── State ──
+  let allClasses   = [];
+  let filteredList = [];
+  let allTeachers  = [];
+  let currentView  = "grid";   // "grid" | "list"
+  let sortCol      = "name";
+  let sortAsc      = true;
+  let editingId    = null;
+
+  // ── Tingkat kelas ──
+  const STORAGE_CLASS_GRADES = "tms-class-grades";
+  const DEFAULT_CLASS_GRADES = ["X", "XI", "XII"];
+
+  function getClassGrades() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_CLASS_GRADES));
+      if (Array.isArray(saved) && saved.length > 0) return saved;
+    } catch (_) {}
+    return DEFAULT_CLASS_GRADES;
+  }
+
+  // Isi dropdown filter & modal dengan daftar tingkat dari settings
+  function populateGradeDropdowns() {
+    const grades = getClassGrades();
+    const filterSel = qs("#filter-grade");
+    const modalSel  = qs("#field-grade");
+
+    // Hapus semua option kecuali pertama (placeholder)
+    while (filterSel.options.length > 1) filterSel.remove(1);
+    while (modalSel.options.length  > 1) modalSel.remove(1);
+
+    grades.forEach((g) => {
+      const opt1 = document.createElement("option");
+      opt1.value = g; opt1.textContent = `Kelas ${g}`;
+      filterSel.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = g; opt2.textContent = g;
+      modalSel.appendChild(opt2);
+    });
+  }
+
+  // ── Warna & util ──
+  const GRADE_COLORS = {
+    X:    { icon: "rgba(37,99,235,.1)", text: "#2563eb",  card: "grade-X"   },
+    XI:   { icon: "rgba(124,58,237,.1)", text: "#7c3aed", card: "grade-XI"  },
+    XII:  { icon: "rgba(16,185,129,.1)", text: "#059669", card: "grade-XII" },
+  };
+
+  function gradeStyle(grade) {
+    return GRADE_COLORS[grade] ?? { icon: "var(--color-bg)", text: "var(--color-text-muted)", card: "grade-other" };
+  }
+
+  // ── Fetch data ──
+  const supabase = await getSupabaseClient();
+
+  async function fetchClasses() {
+    // Ambil semua kelas + jumlah siswa aktif (via class_students)
+    const { data, error } = await supabase
+      .from("classes")
+      .select(`
+        id,
+        name,
+        grade,
+        homeroom_teacher_id,
+        created_at,
+        teachers:homeroom_teacher_id ( id, full_name ),
+        class_students ( id, student_id )
+      `)
+      .order("grade", { ascending: true })
+      .order("name",  { ascending: true });
+
+    if (error) {
+      console.error("fetchClasses error:", error.message);
+      return [];
+    }
+    return data ?? [];
+  }
+
+  async function fetchTeachers() {
+    const { data, error } = await supabase
+      .from("teachers")
+      .select("id, full_name")
+      .eq("is_active", true)
+      .is("deleted_at", null)
+      .order("full_name", { ascending: true });
+
+    if (error) {
+      console.error("fetchTeachers error:", error.message);
+      return [];
+    }
+    return data ?? [];
+  }
+
+  async function fetchStudentsInClass(classId) {
+    const { data, error } = await supabase
+      .from("class_students")
+      .select(`
+        academic_year,
+        students ( id, full_name, nis, gender )
+      `)
+      .eq("class_id", classId)
+      .order("students(full_name)", { ascending: true });
+
+    if (error) {
+      console.error("fetchStudentsInClass error:", error.message);
+      return [];
+    }
+    return (data ?? []).map((cs) => ({ ...cs.students, academic_year: cs.academic_year })).filter(Boolean);
+  }
+
+  // ── Load awal ──
+  [allClasses, allTeachers] = await Promise.all([fetchClasses(), fetchTeachers()]);
+  populateTeacherDropdown(allTeachers);
+  populateGradeDropdowns();
+  applyFiltersAndRender();
+
+  // ── Isi dropdown wali kelas ──
+  function populateTeacherDropdown(teachers) {
+    const sel = qs("#field-homeroom");
+    // Hapus semua option kecuali yang pertama (placeholder)
+    while (sel.options.length > 1) sel.remove(1);
+    teachers.forEach((t) => {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = t.full_name;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Filter & search ──
+  function applyFiltersAndRender() {
+    const search = qs("#search-input").value.trim().toLowerCase();
+    const grade  = qs("#filter-grade").value;
+
+    filteredList = allClasses.filter((c) => {
+      const matchSearch = !search || c.name.toLowerCase().includes(search);
+      const matchGrade  = !grade  || c.grade === grade;
+      return matchSearch && matchGrade;
+    });
+
+    if (currentView === "list") {
+      filteredList.sort((a, b) => {
+        const va = (a[sortCol] ?? "").toString().toLowerCase();
+        const vb = (b[sortCol] ?? "").toString().toLowerCase();
+        return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+      });
+    }
+
+    renderStatBar();
+    renderContent();
+  }
+
+  let searchTimer;
+  qs("#search-input").addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFiltersAndRender, 250);
+  });
+  qs("#filter-grade").addEventListener("change", applyFiltersAndRender);
+
+  // ── View toggle ──
+  qs("#btn-view-grid").addEventListener("click", () => {
+    currentView = "grid";
+    qs("#btn-view-grid").classList.add("active");
+    qs("#btn-view-list").classList.remove("active");
+    applyFiltersAndRender();
+  });
+
+  qs("#btn-view-list").addEventListener("click", () => {
+    currentView = "list";
+    qs("#btn-view-list").classList.add("active");
+    qs("#btn-view-grid").classList.remove("active");
+    applyFiltersAndRender();
+  });
+
+  // ── Stat bar ──
+  function renderStatBar() {
+    const total  = allClasses.length;
+    const totalX  = allClasses.filter((c) => c.grade === "X").length;
+    const totalXI = allClasses.filter((c) => c.grade === "XI").length;
+    const totalXII= allClasses.filter((c) => c.grade === "XII").length;
+
+    qs("#stat-bar").innerHTML = `
+      <div class="class-stat-card">
+        <div class="class-stat-icon" style="background:rgba(37,99,235,.1)">
+          <i data-lucide="school" style="width:1rem;height:1rem;color:var(--color-primary)"></i>
+        </div>
+        <div class="class-stat-info">
+          <div class="class-stat-value">${total}</div>
+          <div class="class-stat-label">Total Kelas</div>
+        </div>
+      </div>
+      <div class="class-stat-card">
+        <div class="class-stat-icon" style="background:rgba(37,99,235,.1)">
+          <i data-lucide="bookmark" style="width:1rem;height:1rem;color:var(--color-primary)"></i>
+        </div>
+        <div class="class-stat-info">
+          <div class="class-stat-value">${totalX}</div>
+          <div class="class-stat-label">Kelas X</div>
+        </div>
+      </div>
+      <div class="class-stat-card">
+        <div class="class-stat-icon" style="background:rgba(124,58,237,.1)">
+          <i data-lucide="bookmark" style="width:1rem;height:1rem;color:#7c3aed"></i>
+        </div>
+        <div class="class-stat-info">
+          <div class="class-stat-value">${totalXI}</div>
+          <div class="class-stat-label">Kelas XI</div>
+        </div>
+      </div>
+      <div class="class-stat-card">
+        <div class="class-stat-icon" style="background:rgba(16,185,129,.1)">
+          <i data-lucide="bookmark" style="width:1rem;height:1rem;color:#059669"></i>
+        </div>
+        <div class="class-stat-info">
+          <div class="class-stat-value">${totalXII}</div>
+          <div class="class-stat-label">Kelas XII</div>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+  }
+
+  // ── Render konten utama ──
+  function renderContent() {
+    if (currentView === "grid") renderGridView();
+    else renderListView();
+  }
+
+  // ── Grid View ──
+  function renderGridView() {
+    const container = qs("#classes-container");
+
+    if (filteredList.length === 0) {
+      container.innerHTML = renderEmptyState();
+      lucide.createIcons();
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="classes-grid">
+        ${filteredList.map((c) => renderClassCard(c)).join("")}
+      </div>
+    `;
+
+    lucide.createIcons();
+    bindGridActions();
+  }
+
+  function renderClassCard(c) {
+    const gs           = gradeStyle(c.grade);
+    const studentCount = (c.class_students ?? []).length;
+    const homeroom     = c.teachers?.full_name ?? "Belum ditentukan";
+
+    return `
+      <div class="class-card ${gs.card}" data-id="${c.id}">
+        <div class="class-card-header">
+          <div class="class-card-icon">
+            <i data-lucide="school" style="width:1.1rem;height:1.1rem"></i>
+          </div>
+          <div class="class-card-actions">
+            <button class="btn-row-action btn-edit" data-id="${c.id}" title="Edit">
+              <i data-lucide="pencil" style="width:.8rem;height:.8rem"></i>
+            </button>
+            <button class="btn-row-action danger btn-delete" data-id="${c.id}" title="Hapus">
+              <i data-lucide="trash-2" style="width:.8rem;height:.8rem"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="class-card-name">${c.name}</div>
+        <div class="class-card-grade">
+          <span class="grade-badge ${c.grade in GRADE_COLORS ? c.grade : 'other'}">Tingkat Kelas ${c.grade}</span>
+        </div>
+
+        <div class="class-card-divider"></div>
+
+        <div class="class-card-footer">
+          <div class="class-card-meta">
+            <i data-lucide="users" style="width:.8rem;height:.8rem"></i>
+            <span>${studentCount} siswa</span>
+          </div>
+          <div class="class-card-homeroom" title="${homeroom}">
+            <i data-lucide="user-circle" style="width:.75rem;height:.75rem;display:inline;vertical-align:middle;margin-right:.2rem"></i>${homeroom}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function bindGridActions() {
+    // Klik body kartu → buka drawer (kecuali kalau klik tombol aksi)
+    qs("#classes-container").querySelectorAll(".class-card[data-id]").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".btn-row-action")) return;
+        openDrawer(card.dataset.id);
+      });
+    });
+
+    document.querySelectorAll(".class-card .btn-edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openModal("edit", btn.dataset.id);
+      });
+    });
+
+    document.querySelectorAll(".class-card .btn-delete").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await handleDelete(btn.dataset.id);
+      });
+    });
+  }
+
+  // ── List View ──
+  function renderListView() {
+    const container = qs("#classes-container");
+
+    if (filteredList.length === 0) {
+      container.innerHTML = renderEmptyState();
+      lucide.createIcons();
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="classes-table-wrapper">
+        <table class="classes-table">
+          <thead>
+            <tr>
+              <th data-col="name" class="${sortCol === 'name' ? 'sorted' : ''}">
+                Nama Kelas
+                <i data-lucide="chevrons-up-down" style="display:inline;width:.7rem;height:.7rem;vertical-align:middle;margin-left:.2rem"></i>
+              </th>
+              <th data-col="grade" class="${sortCol === 'grade' ? 'sorted' : ''}">Tingkat Kelas</th>
+              <th>Wali Kelas</th>
+              <th>Jumlah Siswa</th>
+              <th style="width:6rem">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="classes-tbody">
+            ${filteredList.map((c) => renderTableRow(c)).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    lucide.createIcons();
+    bindTableActions();
+    bindSortHeaders();
+  }
+
+  function renderTableRow(c) {
+    const gs           = gradeStyle(c.grade);
+    const studentCount = (c.class_students ?? []).length;
+    const homeroom     = c.teachers?.full_name ?? "—";
+
+    return `
+      <tr data-id="${c.id}">
+        <td>
+          <div class="class-name-cell">
+            <div class="class-icon-sm" style="background:${gs.icon}">
+              <i data-lucide="school" style="width:.9rem;height:.9rem;color:${gs.text}"></i>
+            </div>
+            <span class="class-full-name">${c.name}</span>
+          </div>
+        </td>
+        <td>
+          <span class="grade-badge ${c.grade in GRADE_COLORS ? c.grade : 'other'}">Tingkat Kelas ${c.grade}</span>
+        </td>
+        <td style="font-size:.8125rem;color:var(--color-text-muted)">${homeroom}</td>
+        <td style="font-size:.8125rem;color:var(--color-text-muted)">
+          <span style="display:flex;align-items:center;gap:.35rem">
+            <i data-lucide="users" style="width:.8rem;height:.8rem"></i>
+            ${studentCount} siswa
+          </span>
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-row-action btn-detail" data-id="${c.id}" title="Lihat detail">
+              <i data-lucide="eye" style="width:.8rem;height:.8rem"></i>
+            </button>
+            <button class="btn-row-action btn-edit" data-id="${c.id}" title="Edit">
+              <i data-lucide="pencil" style="width:.8rem;height:.8rem"></i>
+            </button>
+            <button class="btn-row-action danger btn-delete" data-id="${c.id}" title="Hapus">
+              <i data-lucide="trash-2" style="width:.8rem;height:.8rem"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function bindTableActions() {
+    qs("#classes-container").querySelectorAll("tr[data-id]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if (e.target.closest(".row-actions")) return;
+        openDrawer(row.dataset.id);
+      });
+    });
+
+    document.querySelectorAll(".btn-detail").forEach((btn) => {
+      btn.addEventListener("click", (e) => { e.stopPropagation(); openDrawer(btn.dataset.id); });
+    });
+
+    document.querySelectorAll(".classes-table .btn-edit").forEach((btn) => {
+      btn.addEventListener("click", (e) => { e.stopPropagation(); openModal("edit", btn.dataset.id); });
+    });
+
+    document.querySelectorAll(".classes-table .btn-delete").forEach((btn) => {
+      btn.addEventListener("click", async (e) => { e.stopPropagation(); await handleDelete(btn.dataset.id); });
+    });
+  }
+
+  function bindSortHeaders() {
+    document.querySelectorAll(".classes-table thead th[data-col]").forEach((th) => {
+      th.addEventListener("click", () => {
+        const col = th.dataset.col;
+        sortAsc = sortCol === col ? !sortAsc : true;
+        sortCol = col;
+        applyFiltersAndRender();
+      });
+    });
+  }
+
+  // ── Empty state ──
+  function renderEmptyState() {
+    return `
+      <div class="classes-empty">
+        <i data-lucide="school" style="width:2.5rem;height:2.5rem"></i>
+        <p>Belum ada kelas yang sesuai pencarian.</p>
+      </div>
+    `;
+  }
+
+  // ── Detail Drawer ──
+  const drawer        = qs("#detail-drawer");
+  const drawerOverlay = qs("#drawer-overlay");
+  const drawerBody    = qs("#drawer-body");
+
+  function closeDrawer() {
+    drawer.classList.remove("open");
+    drawerOverlay.classList.remove("open");
+  }
+
+  qs("#drawer-close").addEventListener("click", closeDrawer);
+  drawerOverlay.addEventListener("click", closeDrawer);
+
+  const AVATAR_COLORS = ["#2563eb","#7c3aed","#db2777","#dc2626","#d97706","#16a34a","#0891b2","#9333ea"];
+  function avatarColor(name) {
+    return AVATAR_COLORS[(name || "?").charCodeAt(0) % AVATAR_COLORS.length];
+  }
+  function initials(name) {
+    return (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  }
+
+  async function openDrawer(classId) {
+    // Tampilkan skeleton dulu
+    drawerBody.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem 0">
+        <div class="skeleton" style="width:4rem;height:4rem;border-radius:1rem"></div>
+        <div class="skeleton skeleton-text" style="width:7rem"></div>
+        <div class="skeleton skeleton-sub" style="width:4rem"></div>
+      </div>
+    `;
+    drawer.classList.add("open");
+    drawerOverlay.classList.add("open");
+
+    const cls = allClasses.find((c) => c.id === classId);
+    if (!cls) {
+      drawerBody.innerHTML = `<p style="color:var(--color-text-muted);font-size:.875rem;text-align:center;padding:2rem">Data tidak ditemukan.</p>`;
+      return;
+    }
+
+    const students = await fetchStudentsInClass(classId);
+    const gs       = gradeStyle(cls.grade);
+    const homeroom = cls.teachers?.full_name ?? "Belum ditentukan";
+
+    drawerBody.innerHTML = `
+      <!-- Header kelas -->
+      <div class="drawer-class-header">
+        <div class="drawer-class-icon" style="background:${gs.icon}">
+          <i data-lucide="school" style="width:1.75rem;height:1.75rem;color:${gs.text}"></i>
+        </div>
+        <div class="drawer-class-name">${cls.name}</div>
+        <div class="drawer-class-grade">
+          <span class="grade-badge ${cls.grade in GRADE_COLORS ? cls.grade : 'other'}">Tingkat Kelas ${cls.grade}</span>
+        </div>
+      </div>
+
+      <!-- Info umum -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">Informasi Kelas</div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Wali Kelas</span>
+          <span class="drawer-info-value">${homeroom}</span>
+        </div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Jumlah Siswa</span>
+          <span class="drawer-info-value">${students.length} siswa</span>
+        </div>
+        <div class="drawer-info-row">
+          <span class="drawer-info-label">Dibuat</span>
+          <span class="drawer-info-value">${
+            new Date(cls.created_at).toLocaleDateString("id-ID", {
+              day: "numeric", month: "short", year: "numeric"
+            })
+          }</span>
+        </div>
+      </div>
+
+      <!-- Daftar siswa -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">
+          Daftar Siswa
+          <span style="float:right;color:var(--color-text);font-size:.8rem">${students.length} orang</span>
+        </div>
+        <button
+          id="btn-manage-students"
+          data-id="${cls.id}"
+          style="width:100%;margin-bottom:.75rem;padding:.5rem;border-radius:.5rem;border:1.5px dashed var(--color-border);background:transparent;color:var(--color-primary);font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit"
+        >
+          + Kelola Siswa di Kelas Ini
+        </button>
+        ${students.length === 0
+          ? `<p style="font-size:.8125rem;color:var(--color-text-muted)">Belum ada siswa terdaftar di kelas ini.</p>`
+          : `<div class="drawer-student-list">
+              ${students.map((s) => `
+                <div class="drawer-student-item">
+                  <div class="drawer-student-avatar" style="background:${avatarColor(s.full_name)}">${initials(s.full_name)}</div>
+                  <span class="drawer-student-name">${s.full_name}</span>
+                  <span class="drawer-student-nis">${s.nis || "—"}</span>
+                </div>
+              `).join("")}
+            </div>`
+        }
+      </div>
+
+      <!-- Tombol aksi -->
+      <div style="display:flex;gap:.5rem;margin-top:1.5rem">
+        <button
+          onclick="document.getElementById('detail-drawer').classList.remove('open');document.getElementById('drawer-overlay').classList.remove('open');"
+          style="flex:1;padding:.55rem;border-radius:.55rem;border:1.5px solid var(--color-border);background:transparent;font-size:.8125rem;font-weight:600;cursor:pointer;color:var(--color-text-muted);font-family:inherit"
+        >
+          Tutup
+        </button>
+        <button
+          id="drawer-edit-btn"
+          data-id="${cls.id}"
+          style="flex:1;padding:.55rem;border-radius:.55rem;background:var(--color-primary);color:white;font-size:.8125rem;font-weight:600;border:none;cursor:pointer;font-family:inherit"
+        >
+          Edit Kelas
+        </button>
+      </div>
+    `;
+
+    lucide.createIcons();
+
+    qs("#drawer-edit-btn")?.addEventListener("click", () => {
+      closeDrawer();
+      openModal("edit", cls.id);
+    });
+    qs("#btn-manage-students")?.addEventListener("click", () => openManageStudentsDialog(classId));
+  }
+
+  // ── Modal Tambah / Edit ──
+  const modal      = qs("#class-modal");
+  const modalTitle = qs("#modal-title");
+  const saveText   = qs("#modal-save-text");
+  const saveBtn    = qs("#modal-save");
+
+  function openModal(mode, classId = null) {
+    editingId = classId;
+
+    // Reset form
+    qs("#field-name").value     = "";
+    qs("#field-grade").value    = "";
+    qs("#field-homeroom").value = "";
+    qs("#err-name").textContent  = "";
+    qs("#err-grade").textContent = "";
+    qs("#field-name").classList.remove("is-invalid");
+    qs("#field-grade").classList.remove("is-invalid");
+
+    if (mode === "edit" && classId) {
+      const c = allClasses.find((c) => c.id === classId);
+      if (!c) return;
+      modalTitle.textContent      = "Edit Kelas";
+      saveText.textContent        = "Simpan Perubahan";
+      qs("#field-name").value     = c.name;
+      qs("#field-grade").value    = c.grade;
+      qs("#field-homeroom").value = c.homeroom_teacher_id ?? "";
+    } else {
+      modalTitle.textContent = "Tambah Kelas";
+      saveText.textContent   = "Tambah";
+    }
+
+    modal.classList.add("open");
+    qs("#field-name").focus();
+    lucide.createIcons();
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+    editingId = null;
+  }
+
+  qs("#btn-add-class").addEventListener("click", () => openModal("add"));
+  qs("#modal-close").addEventListener("click", closeModal);
+  qs("#modal-cancel").addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+  // ── Simpan ──
+  saveBtn.addEventListener("click", async () => {
+    const name  = qs("#field-name").value.trim();
+    const grade = qs("#field-grade").value;
+
+    let valid = true;
+
+    if (!name) {
+      qs("#err-name").textContent = "Nama kelas tidak boleh kosong.";
+      qs("#field-name").classList.add("is-invalid");
+      valid = false;
+    } else {
+      qs("#err-name").textContent = "";
+      qs("#field-name").classList.remove("is-invalid");
+    }
+
+    if (!grade) {
+      qs("#err-grade").textContent = "Tingkat Kelas harus dipilih.";
+      qs("#field-grade").classList.add("is-invalid");
+      valid = false;
+    } else {
+      qs("#err-grade").textContent = "";
+      qs("#field-grade").classList.remove("is-invalid");
+    }
+
+    if (!valid) return;
+
+    const homeroomId = qs("#field-homeroom").value || null;
+
+    saveBtn.disabled     = true;
+    saveText.textContent = "Menyimpan...";
+
+    let dbError = null;
+
+    if (editingId) {
+      // UPDATE
+      const { error } = await supabase
+        .from("classes")
+        .update({
+          name,
+          grade,
+          homeroom_teacher_id: homeroomId,
+        })
+        .eq("id", editingId);
+      dbError = error;
+    } else {
+      // INSERT
+      const { error } = await supabase
+        .from("classes")
+        .insert({ name, grade, homeroom_teacher_id: homeroomId });
+      dbError = error;
+    }
+
+    saveBtn.disabled     = false;
+    saveText.textContent = editingId ? "Simpan Perubahan" : "Tambah";
+
+    if (dbError) {
+      showError(dbError.message);
+      return;
+    }
+
+    showToast("success", editingId ? "Kelas berhasil diperbarui." : "Kelas baru berhasil ditambahkan.");
+    closeModal();
+    await refreshClasses();
+  });
+
+  // ── Hapus ──
+  async function handleDelete(classId) {
+    const cls = allClasses.find((c) => c.id === classId);
+    const studentCount = (cls?.class_students ?? []).length;
+
+    // Peringatan ekstra kalau kelas masih ada siswa
+    const warningText = studentCount > 0
+      ? `Kelas ini masih memiliki ${studentCount} siswa terdaftar. Menghapus kelas akan melepas relasi siswa–kelas secara permanen (cascade delete).`
+      : `Kelas "${cls?.name ?? ''}" akan dihapus secara permanen.`;
+
+    const ok = await showConfirm(`Hapus kelas "${cls?.name ?? ''}"?`, warningText);
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("classes")
+      .delete()
+      .eq("id", classId);
+
+    if (error) {
+      showError(error.message);
+      return;
+    }
+
+    showToast("success", "Kelas berhasil dihapus.");
+    await refreshClasses();
+  }
+
+  // ── Kelola Siswa (tambah/keluarkan siswa dari kelas via checklist) ──
+  async function openManageStudentsDialog(classId) {
+    const academicYear = getCurrentAcademicYear();
+
+    const [{ data: allActive }, currentList] = await Promise.all([
+      supabase.from("students").select("id, full_name, nis")
+        .eq("is_active", true).is("deleted_at", null)
+        .order("full_name", { ascending: true }),
+      fetchStudentsInClass(classId),
+    ]);
+
+    const currentIds = new Set(currentList.map((s) => s.id));
+
+    const checklistHtml = (allActive ?? []).map((s) => `
+      <label style="display:flex;align-items:center;gap:.5rem;padding:.35rem 0;font-size:.85rem">
+        <input type="checkbox" value="${s.id}" ${currentIds.has(s.id) ? "checked" : ""} />
+        ${s.full_name}${s.nis ? ` <span style="color:#94a3b8">(${s.nis})</span>` : ""}
+      </label>
+    `).join("");
+
+    const { value: confirmed } = await Swal.fire({
+      title: "Kelola Siswa di Kelas Ini",
+      html: `<div style="max-height:320px;overflow-y:auto;text-align:left">${checklistHtml || "<p>Tidak ada siswa aktif.</p>"}</div>`,
+      width: 420,
+      showCancelButton: true,
+      confirmButtonText: "Simpan",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#2563EB",
+      focusConfirm: false,
+      preConfirm: () => Array.from(
+        document.querySelectorAll('.swal2-html-container input[type=checkbox]:checked')
+      ).map((cb) => cb.value),
+    });
+
+    if (confirmed === undefined) return; // klik batal
+
+    const newIds   = new Set(confirmed);
+    const toAdd    = [...newIds].filter((id) => !currentIds.has(id));
+    const toRemove = [...currentIds].filter((id) => !newIds.has(id));
+
+    if (toAdd.length > 0) {
+      await supabase.from("class_students").insert(
+        toAdd.map((studentId) => ({ class_id: classId, student_id: studentId, academic_year: academicYear }))
+      );
+    }
+    if (toRemove.length > 0) {
+      await supabase.from("class_students")
+        .delete()
+        .eq("class_id", classId)
+        .eq("academic_year", academicYear)
+        .in("student_id", toRemove);
+    }
+
+    showToast("success", "Daftar siswa kelas berhasil diperbarui.");
+    await refreshClasses();
+    openDrawer(classId);
+  }
+
+  // ── Refresh ──
+  async function refreshClasses() {
+    allClasses = await fetchClasses();
+    applyFiltersAndRender();
+  }
+</script>
+
+</body>
+</html>
