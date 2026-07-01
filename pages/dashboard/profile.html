@@ -372,7 +372,8 @@
 			import { renderSidebar } from "../../components/sidebar.component.js";
 			import { renderNavbar } from "../../components/navbar.component.js";
 			import { getCurrentSession } from "../../services/auth.service.js";
-			import { getSupabaseClient } from "../../services/supabase.service.js";
+			// import { getSupabaseClient } from "../../services/supabase.service.js";
+			import { getMyProfile, updateMyProfile, updateMyPassword, uploadProfilePhoto, getMyStats } from "../../services/profile.service.js";
 			import { showToast, showError, showConfirm } from "../../utils/notification.util.js";
 
 			// ── Auth guard ──
@@ -381,11 +382,12 @@
 				window.location.href = "../auth/login.html";
 			}
 
-			const supabase = await getSupabaseClient();
+			// const supabase = await getSupabaseClient();
 			const userId = session.user.id;
 
 			// Ambil profil guru
-			const { data: profile } = await supabase.from("teachers").select("*").eq("id", userId).single();
+			const profile = await getMyProfile();
+			// const { data: profile } = await supabase.from("teachers").select("*").eq("id", userId).single();
 
 			const isAdmin = profile?.role === "admin";
 
@@ -428,17 +430,21 @@
 			}
 
 			// Statistik mini
-			const [{ count: jadwalCount }, { count: siswaCount }, { count: absenCount }] = await Promise.all([
-				supabase.from("schedules").select("id", { count: "exact", head: true }).eq("teacher_id", userId),
-				supabase
-					.from("class_students")
-					.select("student_id", { count: "exact", head: true })
-					.in("class_id", (await supabase.from("schedules").select("class_id").eq("teacher_id", userId)).data?.map((s) => s.class_id) ?? []),
-				supabase.from("attendances").select("id", { count: "exact", head: true }).eq("teacher_id", userId),
-			]);
-			document.getElementById("stat-jadwal").textContent = jadwalCount ?? 0;
-			document.getElementById("stat-siswa").textContent = siswaCount ?? 0;
-			document.getElementById("stat-absen").textContent = absenCount ?? 0;
+			// const [{ count: jadwalCount }, { count: siswaCount }, { count: absenCount }] = await Promise.all([
+			// 	supabase.from("schedules").select("id", { count: "exact", head: true }).eq("teacher_id", userId),
+			// 	supabase
+			// 		.from("class_students")
+			// 		.select("student_id", { count: "exact", head: true })
+			// 		.in("class_id", (await supabase.from("schedules").select("class_id").eq("teacher_id", userId)).data?.map((s) => s.class_id) ?? []),
+			// 	supabase.from("attendances").select("id", { count: "exact", head: true }).eq("teacher_id", userId),
+			// ]);
+			// document.getElementById("stat-jadwal").textContent = jadwalCount ?? 0;
+			// document.getElementById("stat-siswa").textContent = siswaCount ?? 0;
+			// document.getElementById("stat-absen").textContent = absenCount ?? 0;
+			const stats = await getMyStats();
+			document.getElementById("stat-jadwal").textContent = stats.jadwal;
+			document.getElementById("stat-siswa").textContent = stats.siswa;
+			document.getElementById("stat-absen").textContent = stats.absen;
 
 			// Dark mode toggle state
 			_syncDarkModeToggle();
@@ -448,29 +454,51 @@
 				document.getElementById("photo-input").click();
 			});
 
+			// document.getElementById("photo-input").addEventListener("change", async (e) => {
+			// 	const file = e.target.files[0];
+			// 	if (!file) return;
+			// 	if (file.size > 2 * 1024 * 1024) {
+			// 		showError("Ukuran foto maksimal 2 MB.");
+			// 		return;
+			// 	}
+
+			// 	const ext = file.name.split(".").pop();
+			// 	const path = `avatars/${userId}.${ext}`;
+
+			// 	const { error: upErr } = await supabase.storage.from("teacher-photos").upload(path, file, { upsert: true });
+
+			// 	if (upErr) {
+			// 		showError("Gagal upload foto: " + upErr.message);
+			// 		return;
+			// 	}
+
+			// 	const {
+			// 		data: { publicUrl },
+			// 	} = supabase.storage.from("teacher-photos").getPublicUrl(path);
+
+			// 	await supabase.from("teachers").update({ photo_url: publicUrl }).eq("id", userId);
+
+			// 	// Refresh tampilan avatar
+			// 	let img = document.querySelector(".profile-avatar-ring img");
+			// 	if (!img) {
+			// 		img = document.createElement("img");
+			// 		const ring = document.getElementById("avatar-btn");
+			// 		ring.insertBefore(img, ring.firstChild);
+			// 		document.getElementById("avatar-initials").style.display = "none";
+			// 	}
+			// 	img.src = publicUrl + "?t=" + Date.now();
+			// 	showToast("success", "Foto profil diperbarui!");
+			// });
 			document.getElementById("photo-input").addEventListener("change", async (e) => {
 				const file = e.target.files[0];
 				if (!file) return;
-				if (file.size > 2 * 1024 * 1024) {
-					showError("Ukuran foto maksimal 2 MB.");
+
+				const { publicUrl, error } = await uploadProfilePhoto(file);
+
+				if (error) {
+					showError("Gagal upload foto: " + error);
 					return;
 				}
-
-				const ext = file.name.split(".").pop();
-				const path = `avatars/${userId}.${ext}`;
-
-				const { error: upErr } = await supabase.storage.from("teacher-photos").upload(path, file, { upsert: true });
-
-				if (upErr) {
-					showError("Gagal upload foto: " + upErr.message);
-					return;
-				}
-
-				const {
-					data: { publicUrl },
-				} = supabase.storage.from("teacher-photos").getPublicUrl(path);
-
-				await supabase.from("teachers").update({ photo_url: publicUrl }).eq("id", userId);
 
 				// Refresh tampilan avatar
 				let img = document.querySelector(".profile-avatar-ring img");
@@ -500,10 +528,11 @@
 				btn.disabled = true;
 				document.getElementById("btn-save-info-text").textContent = "Menyimpan...";
 
-				const { error } = await supabase
-					.from("teachers")
-					.update({ full_name: name, nip: nip || null, phone: phone || null })
-					.eq("id", userId);
+				// const { error } = await supabase
+				// 	.from("teachers")
+				// 	.update({ full_name: name, nip: nip || null, phone: phone || null })
+				// 	.eq("id", userId);
+				const { error } = await updateMyProfile({ fullName: name, nip, phone });
 
 				btn.disabled = false;
 				document.getElementById("btn-save-info-text").textContent = "Simpan Perubahan";
@@ -561,7 +590,8 @@
 				btn.disabled = true;
 				document.getElementById("btn-save-pw-text").textContent = "Memperbarui...";
 
-				const { error } = await supabase.auth.updateUser({ password: pw1 });
+				// const { error } = await supabase.auth.updateUser({ password: pw1 });
+				const { error } = await updateMyPassword(pw1);
 				btn.disabled = false;
 				document.getElementById("btn-save-pw-text").textContent = "Perbarui Password";
 
